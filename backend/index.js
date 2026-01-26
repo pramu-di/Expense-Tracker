@@ -172,4 +172,8 @@ app.put('/api/user/:id/profile', async (req, res) => {
 });
 
 const PORT = 5000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+if (require.main === module) {
+    app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;

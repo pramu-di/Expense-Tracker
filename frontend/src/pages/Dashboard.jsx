@@ -137,7 +137,7 @@ const Dashboard = () => {
 
   const fetchUserData = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/${userId}`);
+      const res = await axios.get(`/api/user/${userId}`);
       const { settings, customCategories, name, budgets, avatar, createdAt } = res.data;
       if (settings) {
         setCurrency(settings.currency || "LKR");
@@ -154,7 +154,7 @@ const Dashboard = () => {
 
   const updateSettings = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/settings`, {
+      await axios.put(`/api/user/${userId}/settings`, {
         settings: { currency, darkMode, savingGoal }
       });
       toast.success("Settings Saved Successfully!");
@@ -163,14 +163,14 @@ const Dashboard = () => {
 
   const saveBudgets = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/budgets`, { budgets });
+      await axios.put(`/api/user/${userId}/budgets`, { budgets });
       toast.success("Budgets Updated!");
     } catch (err) { toast.error("Failed to save budgets."); }
   };
 
   const updateProfile = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/profile`, { name: tempName, avatar: profileAvatar });
+      await axios.put(`/api/user/${userId}/profile`, { name: tempName, avatar: profileAvatar });
       setProfileName(tempName);
       setIsEditingProfile(false);
       toast.success("Profile Updated!");
@@ -181,7 +181,7 @@ const Dashboard = () => {
     if (!newCategory || allCategories.includes(newCategory)) return;
     const updatedCategories = [...customCategories, newCategory];
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/categories`, { customCategories: updatedCategories });
+      await axios.put(`/api/user/${userId}/categories`, { customCategories: updatedCategories });
       setCustomCategories(updatedCategories);
       setNewCategory("");
       toast.success(`Category "${newCategory}" added!`);
@@ -191,7 +191,7 @@ const Dashboard = () => {
   const removeCustomCategory = async (cat) => {
     const updatedCategories = customCategories.filter(c => c !== cat);
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/categories`, { customCategories: updatedCategories });
+      await axios.put(`/api/user/${userId}/categories`, { customCategories: updatedCategories });
       setCustomCategories(updatedCategories);
       toast.success("Category removed.");
     } catch (err) { toast.error("Failed to remove category."); }
@@ -199,7 +199,7 @@ const Dashboard = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/expenses/${userId}`);
+      const res = await axios.get(`/api/expenses/${userId}`);
       setExpenses(res.data);
     } catch (err) { console.error(err); }
   };
@@ -295,12 +295,12 @@ const Dashboard = () => {
 
     try {
       if (editId) {
-        const res = await axios.put(`http://localhost:5000/api/expenses/${editId}`, payload);
+        const res = await axios.put(`/api/expenses/${editId}`, payload);
         setExpenses(expenses.map(exp => exp._id === editId ? res.data : exp));
         setEditId(null);
         toast.success("Transaction Updated!");
       } else {
-        const res = await axios.post('http://localhost:5000/api/expenses', payload);
+        const res = await axios.post('/api/expenses', payload);
         setExpenses([...expenses, res.data]);
         toast.success("Transaction Added!");
       }
@@ -312,7 +312,7 @@ const Dashboard = () => {
 
   const deleteExpense = async (id) => {
     if (window.confirm("Delete this entry?")) {
-      await axios.delete(`http://localhost:5000/api/expenses/${id}`);
+      await axios.delete(`/api/expenses/${id}`);
       setExpenses(expenses.filter(exp => exp._id !== id));
       toast.success("Deleted Successfully");
     }

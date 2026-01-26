@@ -12,7 +12,7 @@ const Login = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/login', formData);
+            const res = await axios.post('/api/login', formData);
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('userName', res.data.user.name);
             localStorage.setItem('userId', res.data.user.id);
