@@ -94,7 +94,8 @@ const Dashboard = () => {
   const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
-    if (transcript) {
+    // Only update state from voice if actively listening and transcript exists
+    if (listening && transcript) {
       const amountMatch = transcript.match(/(\d+)/);
       if (amountMatch) setAmount(amountMatch[0]);
 
@@ -111,7 +112,7 @@ const Dashboard = () => {
 
       setText(transcript);
     }
-  }, [transcript, allCategories]);
+  }, [transcript, listening, allCategories]);
 
   const toggleListening = async () => {
     // Debugging Logs
@@ -320,6 +321,7 @@ const Dashboard = () => {
         toast.success("Transaction Added!");
       }
       setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate("");
+      resetTranscript(); // Clear voice buffer
     } catch (err) {
       toast.error("Failed to save transaction.");
     }
