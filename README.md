@@ -1,51 +1,65 @@
-💰 Smart Spend - Full Stack Expense Tracker
-Smart Spend is a comprehensive expense management system built using the MERN Stack. It helps users to track their income and expenses, providing a clear overview of their financial habits.
+# 💰 SmartSpend - Professional Expense Tracker
 
-🚀 Tech Stack
-Frontend: React.js, Axios, CSS3
+**SmartSpend** is a premium, full-stack financial management tool built with the MERN stack. It goes beyond simple tracking by offering income analysis, customizable categories, and a stunning glassmorphism UI.
 
-Backend: Node.js, Express.js
+![SmartSpend UI](https://via.placeholder.com/800x400?text=SmartSpend+Dashboard)
 
-Database: MongoDB Atlas
+## 🚀 Key Features
 
-Version Control: Git & GitHub
+### 🌟 Premium Experience
+-   **Glassmorphism Design**: A modern, translucent UI with dynamic gradients and blur effects.
+-   **Dark Mode**: Fully integrated dark theme that persists across sessions.
+-   **Interactive Dashboard**: Visualize your financial health with intuitive charts and metrics.
 
-📁 Project Structure
-This is a Monorepo containing both the frontend and backend of the application:
+### 💰 Financial Management
+-   **Income & Expense Tracking**: Track both money coming in and going out to see your *Real Balance*.
+-   **Spending Trends**: Analyze your spending habits with the interactive **Area Chart**.
+-   **Transaction Ledger**: A professional data table to manage your history with ease.
+-   **Date Range Filtering**: Filter transactions by specific dates to find exactly what you need.
 
-/frontend - React application (User Interface)
+### ⚙️ Customization
+-   **Custom Categories**: Add your own expense categories (e.g., "Crypto", "Subscriptions").
+-   **Persistent Settings**: Your currency (LKR, USD, EUR, GBP), theme, and saving goals are saved to your profile.
+-   **PDF Reports**: Download detailed transaction reports with one click.
 
-/backend - Node.js & Express API (Server & Database logic)
+---
 
-✨ Key Features
-Real-time Tracking: Add, view, and manage expenses instantly.
+## 🛠️ Tech Stack
 
-MERN Integration: Full CRUD operations using MongoDB, Express, React, and Node.
+-   **Frontend**: React.js, TailwindCSS (Styled), Recharts, jsPDF
+-   **Backend**: Node.js, Express.js
+-   **Database**: MongoDB
+-   **Authentication**: JWT & Bcrypt
 
-Clean UI: Responsive design for easy navigation.
+---
 
-RESTful API: Well-structured backend routes for data management.
+## 📦 Setup & Installation
 
-⚙️ Setup and Installation
-Follow these steps to run the project locally on your machine:
+### 1. Backend Setup
+```bash
+cd backend
+npm install
+npm start
+# Server runs on http://localhost:5000
+```
+*Note: Ensure you have MongoDB installed locally or update the connection string.*
 
-1. Clone the Project
-Bash
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+# App runs on http://localhost:5173
+```
 
-git clone https://github.com/pramu-di/Expense-Tracker.git
-cd Expense-Tracker
-2. Backend Setup
-Open a new terminal and go to the backend folder: cd backend
+---
 
-Install dependencies: npm install
+## 📸 Screenshots
 
-Create a .env file and add your MONGO_URI and PORT.
+| Dashboard (Light) | Dashboard (Dark) |
+|:---:|:---:|
+| *(Add screenshot here)* | *(Add screenshot here)* |
 
-Start the backend: npm start
+---
 
-3. Frontend Setup
-Open another terminal and go to the frontend folder: cd frontend
-
-Install dependencies: npm install
-
-Start the frontend: npm start
+Developed by **[Your Name]** 🚀

@@ -61,9 +61,9 @@ app.get('/api/expenses/:userId', async (req, res) => {
 
 // 4. Add New Expense
 app.post('/api/expenses', async (req, res) => {
-    const { text, amount, category, userId } = req.body;
+    const { text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate } = req.body;
     try {
-        const newExpense = new Expense({ text, amount, category, userId });
+        const newExpense = new Expense({ text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate });
         const savedExpense = await newExpense.save();
         res.status(201).json(savedExpense);
     } catch (err) {
@@ -73,11 +73,11 @@ app.post('/api/expenses', async (req, res) => {
 
 // 5. Update Existing Expense (මෙන්න මේකයි වැදගත්ම කොටස)
 app.put('/api/expenses/:id', async (req, res) => {
-    const { text, amount, category } = req.body;
+    const { text, amount, category, type, isRecurring, billingCycle, nextBillingDate } = req.body;
     try {
         const updatedExpense = await Expense.findByIdAndUpdate(
             req.params.id,
-            { text, amount, category },
+            { text, amount, category, type, isRecurring, billingCycle, nextBillingDate },
             { new: true }
         );
         res.json(updatedExpense);
@@ -96,46 +96,80 @@ app.delete('/api/expenses/:id', async (req, res) => {
     }
 });
 
-// Server එක Start කිරීම (එක් වරක් පමණක් ලියන්න)
-app.listen(5000, () => console.log("Server running on port 5000"));
-// 1. තියෙන ඔක්කොම වියදම් ටික ගන්න (GET)
-app.get('/api/expenses/:userId', async (req, res) => {
+// 7. Get User Details (Settings & Custom Categories)
+app.get('/api/user/:id', async (req, res) => {
     try {
-        const expenses = await Expense.find({ userId: req.params.userId });
-        res.json(expenses);
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 2. වියදමක් Save කරද්දී userId එකත් එක්කම save කරන්න (POST)
-// backend/index.js ඇතුළේ
-app.post('/api/expenses', async (req, res) => {
-    console.log("Data received at Backend:", req.body); // Terminal එකේ මේක පේනවද බලන්න
-    const { text, amount, userId } = req.body;
-    
+// 8. Update User Settings
+app.put('/api/user/:id/settings', async (req, res) => {
+    const { settings } = req.body;
     try {
-        if (!text || !amount || !userId) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
-        
-        const newExpense = new Expense({ text, amount, userId });
-        const savedExpense = await newExpense.save();
-        console.log("Data saved successfully!");
-        res.status(201).json(savedExpense);
-    } catch (err) {
-        console.log("Save Error:", err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
-// 3. වියදමක් මකා දැමීම (DELETE)
-app.delete('/api/expenses/:id', async (req, res) => {
-    try {
-        await Expense.findByIdAndDelete(req.params.id);
-        res.json({ message: "Expense Deleted" });
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: { settings: settings } },
+            { new: true }
+        );
+        res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+// 9. Update Custom Categories
+app.put('/api/user/:id/categories', async (req, res) => {
+    const { customCategories } = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: { customCategories: customCategories } },
+            { new: true }
+        );
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 10. Update User Budgets
+app.put('/api/user/:id/budgets', async (req, res) => {
+    const { budgets } = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: { budgets: budgets } },
+            { new: true }
+        );
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 11. Update User Profile (Avatar & Name)
+app.put('/api/user/:id/profile', async (req, res) => {
+    const { name, avatar } = req.body;
+    try {
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (avatar) updateData.avatar = avatar;
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { new: true }
+        );
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const PORT = 5000;
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
