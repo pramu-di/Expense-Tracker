@@ -113,14 +113,30 @@ const Dashboard = () => {
     }
   }, [transcript, allCategories]);
 
-  const toggleListening = () => {
+  const toggleListening = async () => {
+    // Debugging Logs
+    console.log("Secure Context:", window.isSecureContext);
+    console.log("Browser Supports Speech:", browserSupportsSpeechRecognition);
+
     if (listening) {
       SpeechRecognition.stopListening();
       toast.success("Voice command captured!");
     } else {
-      resetTranscript();
-      SpeechRecognition.startListening({ continuous: false });
-      toast("Listening...", { icon: '🎙️' });
+      if (!browserSupportsSpeechRecognition) {
+        toast.error("Browser doesn't support speech recognition.");
+        return;
+      }
+
+      // Explicitly request permission
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        resetTranscript();
+        SpeechRecognition.startListening({ continuous: false });
+        toast("Listening...", { icon: '🎙️' });
+      } catch (err) {
+        console.error("Microphone Permission Error:", err);
+        toast.error("Microphone access denied. Please allow permissions.");
+      }
     }
   };
 
