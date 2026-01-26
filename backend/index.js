@@ -12,12 +12,30 @@ app.use(cors());
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/expenseDB';
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("Database Connected!"))
-    .catch(err => console.error(err));
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        if (!MONGO_URI) throw new Error("MONGO_URI is missing in environment variables");
 
-// --- API Routes ---
+        const db = await mongoose.connect(MONGO_URI);
+        isConnected = db.connections[0].readyState;
+        console.log("Database Connected!");
+    } catch (err) {
+        console.error("Database Connection Error:", err);
+        throw err;
+    }
+};
 
+// Serverless-safe Database connection middleware
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(500).json({ error: "Database connection failed" });
+    }
+});
 
 // --- API Routes ---
 app.get('/api', (req, res) => {
@@ -177,7 +195,7 @@ app.put('/api/user/:id/profile', async (req, res) => {
 });
 
 // 404 Handler for undefined API routes
-app.use('/api/*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({ error: "Endpoint not found" });
 });
 
