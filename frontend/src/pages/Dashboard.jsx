@@ -7,7 +7,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { motion, AnimatePresence } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import toast, { Toaster } from 'react-hot-toast';
-import 'regenerator-runtime/runtime';
 import {
   LayoutDashboard,
   History,
