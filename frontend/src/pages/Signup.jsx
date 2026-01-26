@@ -12,7 +12,7 @@ const Signup = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await axios.post('/api/register', formData);
+            await axios.post('/api/signup', formData);
             alert("Registration Successful! Please login.");
             navigate('/login');
         } catch (err) {

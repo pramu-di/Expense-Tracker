@@ -19,7 +19,10 @@ mongoose.connect(MONGO_URI)
 // --- API Routes ---
 
 
-// --- API ROUTES ---
+// --- API Routes ---
+app.get('/api', (req, res) => {
+    res.json({ status: "API is running" });
+});
 
 // 1. Signup Route
 app.post('/api/signup', async (req, res) => {
@@ -171,6 +174,11 @@ app.put('/api/user/:id/profile', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// 404 Handler for undefined API routes
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: "Endpoint not found" });
 });
 
 const PORT = 5000;
