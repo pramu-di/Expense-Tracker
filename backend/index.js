@@ -10,7 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect('mongodb://127.0.0.1:27017/expenseDB')
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/expenseDB';
+
+mongoose.connect(MONGO_URI)
     .then(() => console.log("Database Connected!"))
     .catch(err => console.error(err));
 
@@ -42,7 +44,7 @@ app.post('/api/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid password" });
 
-        const token = jwt.sign({ id: user._id }, "secret_key", { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret_key", { expiresIn: '1h' });
         res.json({ token, user: { name: user.name, id: user._id } });
     } catch (err) {
         res.status(500).json({ error: err.message });
