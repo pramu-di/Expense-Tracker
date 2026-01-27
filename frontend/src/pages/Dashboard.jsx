@@ -455,17 +455,16 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* SIDEBAR (Desktop & Mobile Drawer) */}
+      {/* --- SIDEBAR LOGIC SPLIT --- */}
+
+      {/* 1. MOBILE SIDEBAR (DRAWER) */}
       <motion.div
-        initial={false} // Prevent initial animation on desktop
-        animate={{ x: isSidebarOpen ? 0 : window.innerWidth >= 768 ? 0 : '-100%' }} // Simple logic: if desktop, always 0. If mobile, check state.
-        // Actually, mixing JS window checks in render can be hydration unsafe or buggy on resize. 
-        // Better approach: Use tailored variants or keep the CSS class for desktop and only animate for mobile.
-        // Let's rely on CSS classes for the 'hidden' desktop logic and Framer for the mobile slide.
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/95 border-white/5' : 'bg-white/95 border-black/5'} md:bg-transparent backdrop-blur-2xl border-r md:w-64 lg:w-72 flex-shrink-0`}
+        initial={{ x: '-100%' }}
+        animate={{ x: isSidebarOpen ? 0 : '-100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col p-6 gap-2 md:hidden ${darkMode ? 'bg-slate-900/95 border-r border-white/10' : 'bg-white/95 border-r border-black/5'} backdrop-blur-2xl shadow-2xl`}
       >
-        {/* Mobile Sidebar Header with Close Button */}
-        <div className="flex justify-between items-center p-4 mb-4 md:hidden">
+        <div className="flex justify-between items-center p-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl">{profileAvatar}</div>
             <div>
@@ -478,13 +477,45 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Desktop Sidebar Header */}
-        <div className="p-4 mb-8 hidden md:flex items-center gap-3">
+        <div className="flex-1 space-y-2">
+          {[
+            { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+            { id: 'history', icon: History, label: 'History' },
+            { id: 'subscriptions', icon: Repeat, label: 'Subscriptions' },
+            { id: 'profile', icon: UserCircle, label: 'Profile' },
+            { id: 'settings', icon: Settings, label: 'Settings' }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => { setView(item.id); setIsSidebarOpen(false); }}
+              className={`w-full p-4 rounded-xl font-medium text-sm flex items-center gap-4 transition-all
+                ${view === item.id
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'}`
+              }
+            >
+              <item.icon size={22} className={view === item.id ? 'stroke-[2.5px]' : 'stroke-2'} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="mt-auto p-4 rounded-xl font-medium text-sm flex items-center gap-4 text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+        >
+          <LogOut size={22} /> <span>Logout</span>
+        </button>
+      </motion.div>
+
+      {/* 2. DESKTOP SIDEBAR (STATIC) */}
+      <div className={`hidden md:flex w-64 lg:w-72 flex-col p-6 gap-2 flex-shrink-0 border-r ${darkMode ? 'bg-slate-900/50 border-white/5' : 'bg-white/50 border-black/5'} backdrop-blur-2xl`}>
+        <div className="p-4 mb-8 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
           <h1 className={`text-xl font-bold tracking-tight hidden lg:block ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
         </div>
 
-        <div className="flex-1 space-y-2 mt-4 md:mt-0">
+        <div className="flex-1 space-y-2">
           {[
             { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
             { id: 'history', icon: History, label: 'History' },
@@ -494,7 +525,7 @@ const Dashboard = () => {
           ].map(item => (
             <motion.button
               key={item.id}
-              onClick={() => { setView(item.id); setIsSidebarOpen(false); }}
+              onClick={() => setView(item.id)}
               whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}
               className={`w-full p-4 rounded-xl font-medium text-sm flex items-center gap-4 transition-all
                 ${view === item.id
@@ -503,7 +534,7 @@ const Dashboard = () => {
               }
             >
               <item.icon size={22} className={view === item.id ? 'stroke-[2.5px]' : 'stroke-2'} />
-              <span>{item.label}</span>
+              <span className="hidden lg:block">{item.label}</span>
             </motion.button>
           ))}
         </div>
@@ -513,9 +544,9 @@ const Dashboard = () => {
           whileHover={{ x: 4 }}
           className="mt-auto p-4 rounded-xl font-medium text-sm flex items-center gap-4 text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
         >
-          <LogOut size={22} /> <span>Logout</span>
+          <LogOut size={22} /> <span className="hidden lg:block">Logout</span>
         </motion.button>
-      </motion.div>
+      </div>
 
       {/* MAIN VIEW */}
       <div className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative">
