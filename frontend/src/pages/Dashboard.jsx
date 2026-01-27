@@ -13,6 +13,7 @@ import {
   UserCircle,
   Settings,
   LogOut,
+  Menu,
   Mic,
   MicOff,
   TrendingUp,
@@ -415,7 +416,7 @@ const Dashboard = () => {
   const insights = getInsights();
 
   // Mobile Menu State
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // --- UI CONSTANTS ---
   const glassCard = `backdrop-blur-xl ${darkMode ? 'bg-slate-900/70 border-white/10' : 'bg-white/70 border-black/5'} border shadow-2xl rounded-3xl p-8 transition-all hover:bg-opacity-80 duration-300`;
@@ -438,25 +439,30 @@ const Dashboard = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-lg shadow-lg">S</div>
           <span className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-slate-900'}`}>SmartSpend</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X size={24} /> : <Filter size={24} className="rotate-90" />}
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2">
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* MOBILE SIDEBAR OVERLAY */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={() => setIsSidebarOpen(false)}
           />
         )}
       </AnimatePresence>
 
       {/* SIDEBAR (Desktop & Mobile Drawer) */}
       <motion.div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/95 border-white/5' : 'bg-white/95 border-black/5'} md:bg-transparent backdrop-blur-2xl border-r md:w-64 lg:w-72 flex-shrink-0`}
+        initial={false} // Prevent initial animation on desktop
+        animate={{ x: isSidebarOpen ? 0 : window.innerWidth >= 768 ? 0 : '-100%' }} // Simple logic: if desktop, always 0. If mobile, check state.
+        // Actually, mixing JS window checks in render can be hydration unsafe or buggy on resize. 
+        // Better approach: Use tailored variants or keep the CSS class for desktop and only animate for mobile.
+        // Let's rely on CSS classes for the 'hidden' desktop logic and Framer for the mobile slide.
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/95 border-white/5' : 'bg-white/95 border-black/5'} md:bg-transparent backdrop-blur-2xl border-r md:w-64 lg:w-72 flex-shrink-0`}
       >
         <div className="p-4 mb-8 flex items-center gap-3 md:hidden lg:flex">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
@@ -473,7 +479,7 @@ const Dashboard = () => {
           ].map(item => (
             <motion.button
               key={item.id}
-              onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
+              onClick={() => { setView(item.id); setIsSidebarOpen(false); }}
               whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}
               className={`w-full p-4 rounded-xl font-medium text-sm flex items-center gap-4 transition-all
                 ${view === item.id
