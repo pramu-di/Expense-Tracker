@@ -51,12 +51,7 @@ const Dashboard = () => {
   const [transactionType, setTransactionType] = useState("expense");
   const [editId, setEditId] = useState(null);
   const [view, setView] = useState('dashboard');
-  const [darkMode, setDarkMode] = useState(() => {
-    if (localStorage.getItem('darkMode')) {
-      return localStorage.getItem('darkMode') === 'true';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
 
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode);
@@ -171,7 +166,7 @@ const Dashboard = () => {
       const { settings, customCategories, name, budgets, avatar, createdAt } = res.data;
       if (settings) {
         setCurrency(settings.currency || "LKR");
-        setDarkMode(settings.darkMode !== undefined ? settings.darkMode : true);
+        // setDarkMode(settings.darkMode !== undefined ? settings.darkMode : true); // Removed to avoid overriding localStorage
         setSavingGoal(settings.savingGoal || 50000);
       }
       if (customCategories) setCustomCategories(customCategories);
