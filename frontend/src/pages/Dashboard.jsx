@@ -51,7 +51,17 @@ const Dashboard = () => {
   const [transactionType, setTransactionType] = useState("expense");
   const [editId, setEditId] = useState(null);
   const [view, setView] = useState('dashboard');
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -476,7 +486,7 @@ const Dashboard = () => {
             <p className="text-slate-500 font-medium text-sm mt-1">Welcome back, {profileName}</p>
           </div>
           <motion.button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={() => setDarkMode(prev => !prev)}
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             className={`p-3 rounded-full shadow-lg border ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400' : 'bg-white border-slate-200 text-slate-800'}`}
           >
