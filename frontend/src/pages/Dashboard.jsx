@@ -436,7 +436,7 @@ const Dashboard = () => {
       >
         <div className="p-4 mb-8 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent tracking-tight hidden lg:block">SmartSpend</h1>
+          <h1 className={`text-xl font-bold tracking-tight hidden lg:block ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
         </div>
 
         <div className="flex-1 space-y-2">
