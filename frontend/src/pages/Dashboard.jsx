@@ -464,9 +464,24 @@ const Dashboard = () => {
         // Let's rely on CSS classes for the 'hidden' desktop logic and Framer for the mobile slide.
         className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/95 border-white/5' : 'bg-white/95 border-black/5'} md:bg-transparent backdrop-blur-2xl border-r md:w-64 lg:w-72 flex-shrink-0`}
       >
-        <div className="p-4 mb-8 flex items-center gap-3 md:hidden lg:flex">
+        {/* Mobile Sidebar Header with Close Button */}
+        <div className="flex justify-between items-center p-4 mb-4 md:hidden">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl">{profileAvatar}</div>
+            <div>
+              <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{profileName}</h3>
+              <p className="text-xs text-slate-500">Free Plan</p>
+            </div>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Desktop Sidebar Header */}
+        <div className="p-4 mb-8 hidden md:flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
-          <h1 className={`text-xl font-bold tracking-tight ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
+          <h1 className={`text-xl font-bold tracking-tight hidden lg:block ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
         </div>
 
         <div className="flex-1 space-y-2 mt-4 md:mt-0">
