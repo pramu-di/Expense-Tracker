@@ -414,13 +414,16 @@ const Dashboard = () => {
   };
   const insights = getInsights();
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // --- UI CONSTANTS ---
   const glassCard = `backdrop-blur-xl ${darkMode ? 'bg-slate-900/70 border-white/10' : 'bg-white/70 border-black/5'} border shadow-2xl rounded-3xl p-8 transition-all hover:bg-opacity-80 duration-300`;
   const glassInput = `w-full p-4 px-6 rounded-2xl ${darkMode ? 'bg-black/20 text-white placeholder-white/30 focus:bg-black/30' : 'bg-slate-100 text-slate-900 placeholder-slate-400 focus:bg-white'} border border-transparent focus:border-indigo-500 outline-none font-medium transition-all`;
   const primaryBtn = `w-full py-4 rounded-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-1 active:scale-95 transition-all`;
 
   return (
-    <div className={`min-h-screen flex transition-colors duration-700 font-sans selection:bg-indigo-500/30 ${darkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
+    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-700 font-sans selection:bg-indigo-500/30 ${darkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f8fafc] text-slate-900'}`}>
       <Toaster position="top-right" toastOptions={{ style: { background: darkMode ? '#1e293b' : '#fff', color: darkMode ? '#fff' : '#000', borderRadius: '12px' } }} />
 
       {/* BACKGROUND BLOBS */}
@@ -429,17 +432,38 @@ const Dashboard = () => {
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* SIDEBAR */}
+      {/* MOBILE HEADER */}
+      <div className="md:hidden flex justify-between items-center p-4 z-30 relative">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-lg shadow-lg">S</div>
+          <span className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-slate-900'}`}>SmartSpend</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+          {isMobileMenuOpen ? <X size={24} /> : <Filter size={24} className="rotate-90" />}
+        </button>
+      </div>
+
+      {/* MOBILE SIDEBAR OVERLAY */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* SIDEBAR (Desktop & Mobile Drawer) */}
       <motion.div
-        initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}
-        className={`w-20 lg:w-72 flex-shrink-0 z-20 hidden md:flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/50' : 'bg-white/50'} backdrop-blur-2xl border-r border-white/5`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col p-6 gap-2 ${darkMode ? 'bg-slate-900/95 border-white/5' : 'bg-white/95 border-black/5'} md:bg-transparent backdrop-blur-2xl border-r md:w-64 lg:w-72 flex-shrink-0`}
       >
-        <div className="p-4 mb-8 flex items-center gap-3">
+        <div className="p-4 mb-8 flex items-center gap-3 md:hidden lg:flex">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
-          <h1 className={`text-xl font-bold tracking-tight hidden lg:block ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
+          <h1 className={`text-xl font-bold tracking-tight ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
         </div>
 
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-2 mt-4 md:mt-0">
           {[
             { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
             { id: 'history', icon: History, label: 'History' },
@@ -449,7 +473,7 @@ const Dashboard = () => {
           ].map(item => (
             <motion.button
               key={item.id}
-              onClick={() => setView(item.id)}
+              onClick={() => { setView(item.id); setIsMobileMenuOpen(false); }}
               whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}
               className={`w-full p-4 rounded-xl font-medium text-sm flex items-center gap-4 transition-all
                 ${view === item.id
@@ -458,7 +482,7 @@ const Dashboard = () => {
               }
             >
               <item.icon size={22} className={view === item.id ? 'stroke-[2.5px]' : 'stroke-2'} />
-              <span className="hidden lg:block">{item.label}</span>
+              <span>{item.label}</span>
             </motion.button>
           ))}
         </div>
@@ -468,14 +492,14 @@ const Dashboard = () => {
           whileHover={{ x: 4 }}
           className="mt-auto p-4 rounded-xl font-medium text-sm flex items-center gap-4 text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
         >
-          <LogOut size={22} /> <span className="hidden lg:block">Logout</span>
+          <LogOut size={22} /> <span>Logout</span>
         </motion.button>
       </motion.div>
 
       {/* MAIN VIEW */}
-      <div className="flex-1 h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative">
-        <header className="flex justify-between items-center mb-10">
-          <div>
+      <div className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative">
+        <header className="flex justify-between items-center mb-10 md:mb-10">
+          <div className="hidden md:block">
             <motion.h2
               key={view} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-bold tracking-tight"
@@ -484,6 +508,11 @@ const Dashboard = () => {
             </motion.h2>
             <p className="text-slate-500 font-medium text-sm mt-1">Welcome back, {profileName}</p>
           </div>
+          {/* Mobile View Title */}
+          <div className="md:hidden">
+            <h2 className="text-2xl font-bold tracking-tight">{view.charAt(0).toUpperCase() + view.slice(1)}</h2>
+          </div>
+
           <motion.button
             onClick={() => setDarkMode(prev => !prev)}
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
