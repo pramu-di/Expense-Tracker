@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const Expense = require('./models/Expense'); // අපි දැන් හදපු model එක
-const User = require('./models/User'); // අලුත් User model එක
+const Expense = require('./models/Expense'); 
+const User = require('./models/User'); 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -94,7 +94,7 @@ app.post('/api/expenses', async (req, res) => {
     }
 });
 
-// 5. Update Existing Expense (මෙන්න මේකයි වැදගත්ම කොටස)
+// 5. Update Existing Expense 
 app.put('/api/expenses/:id', async (req, res) => {
     const { text, amount, category, type, isRecurring, billingCycle, nextBillingDate } = req.body;
     try {
