@@ -1,5 +1,9 @@
 const express = require('express');
-require('dotenv').config();
+try {
+    require('dotenv').config();
+} catch (e) {
+    console.log("dotenv not found, relying on environment variables");
+}
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Expense = require('./models/Expense');
