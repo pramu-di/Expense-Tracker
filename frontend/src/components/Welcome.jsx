@@ -5,39 +5,54 @@ import { motion } from 'framer-motion';
 const Welcome = () => {
   const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 overflow-hidden relative selection:bg-indigo-500 selection:text-white">
+  // Mobile & Particle Optimization
+  const [isMobile, setIsMobile] = useState(false);
 
-      {/* 1. ANIMATED BACKGROUND GRADIENTS */}
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const particleCount = isMobile ? 8 : 25;
+
+  return (
+    <div className="min-h-screen bg-[#0d0221] text-white flex flex-col items-center justify-center p-6 overflow-hidden relative selection:bg-[#00f2ff] selection:text-[#0d0221]">
+
+      {/* 1. CYBER BACKGROUND & GLOWS */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-950 via-[#0f0524] to-slate-950 opacity-90" />
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Main Gradient */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#1a0b2e] via-[#130725] to-[#0d0221] opacity-100" />
+
+        {/* Neon Ambient Blobs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#00f2ff]/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* 2. PARTICLE EFFECTS */}
+      {/* 2. PARTICLE WAVE / FLOATING LIGHTS */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(particleCount)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0 }}
             animate={{
-              opacity: [0.2, 0.5, 0.2],
+              opacity: [0.1, 0.4, 0.1],
               y: [Math.random() * -100, Math.random() * 100],
               x: [Math.random() * -50, Math.random() * 50]
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: Math.random() * 10 + 15,
               repeat: Infinity,
-              ease: "easeInOut",
+              ease: "linear",
               delay: Math.random() * 5
             }}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full bg-[#00f2ff] shadow-[0_0_10px_#00f2ff]"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
-              width: `${Math.random() * 4 + 1}px`,
-              height: `${Math.random() * 4 + 1}px`,
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
             }}
           />
         ))}
@@ -52,40 +67,48 @@ const Welcome = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center md:text-left space-y-8"
         >
+          {/* Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-lg shadow-indigo-500/10"
+            animate={{ y: [-5, 5, -5] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-[#00f2ff]/20 backdrop-blur-md shadow-[0_0_15px_rgba(0,242,255,0.1)]"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f2ff] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00f2ff]"></span>
             </span>
-            <span className="text-indigo-200 text-xs font-bold uppercase tracking-widest">SmartSpend v2.0 Live</span>
+            <span className="text-[#00f2ff] text-xs font-bold uppercase tracking-[0.2em] drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">
+              SmartSpend v2.0
+            </span>
           </motion.div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-white">
+          {/* Headline */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-white drop-shadow-xl">
             Master Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-2xl">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ff] via-white to-[#00f2ff] drop-shadow-[0_0_20px_rgba(0,242,255,0.3)]">
               Wealth
             </span>
           </h1>
 
           <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed max-w-lg mx-auto md:mx-0">
-            Experience the future of personal finance. Elegant tracking, powerful insights, and total control—all in one beautiful dashboard.
+            Experience the future of personal finance. Elegant tracking, powerful insights, and total control—wrapped in a beautiful cyber-interface.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center md:justify-start">
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-5 pt-4 justify-center md:justify-start">
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 20px 40px -10px rgba(79, 70, 229, 0.4)" }} whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05, boxShadow: "0 0 30px -5px rgba(0, 242, 255, 0.4)" }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl shadow-xl border border-white/10 flex items-center justify-center gap-2 group"
+              className="px-8 py-4 bg-[#00f2ff] text-[#0d0221] font-black rounded-sm shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center gap-2 group uppercase tracking-wider relative overflow-hidden"
             >
-              Get Started <span className="group-hover:translate-x-1 transition-transform">→</span>
+              <span className="relative z-10 group-hover:translate-x-1 transition-transform">Get Started</span>
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/signup')}
-              className="px-8 py-4 bg-white/5 text-white font-bold rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all"
+              className="px-8 py-4 bg-transparent text-white font-bold rounded-sm border border-[#00f2ff]/30 hover:bg-[#00f2ff]/10 hover:border-[#00f2ff]/60 transition-all uppercase tracking-wider"
             >
               Create Account
             </motion.button>
@@ -93,64 +116,68 @@ const Welcome = () => {
         </motion.div>
 
 
-        {/* --- RIGHT: 3D VISUAL --- */}
+        {/* --- RIGHT: 3D GLASS CARD --- */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 1, delay: 0.2, type: "spring" }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, delay: 0.2 }}
           className="relative flex justify-center items-center perspective-1000"
         >
-          {/* Glass Card */}
           <motion.div
-            animate={{ y: [-15, 15, -15] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-full max-w-md aspect-[4/5] bg-gradient-to-b from-slate-800/40 to-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl p-8 flex flex-col overflow-hidden"
+            animate={{ y: [-15, 15, -15], rotateX: [2, -2, 2], rotateY: [-2, 2, -2] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-full max-w-md aspect-[4/5] bg-gradient-to-b from-white/5 to-transparent backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-10">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xl shadow-lg">⚡</div>
-              <div className="w-20 h-2 rounded-full bg-white/10" />
+              <div className="w-12 h-12 rounded-xl bg-[#00f2ff]/20 border border-[#00f2ff]/30 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(0,242,255,0.2)]">⚡</div>
+              <div className="w-20 h-1 rounded-full bg-white/10" />
             </div>
 
-            {/* Chart Simulation */}
+            {/* Neon Bars */}
             <div className="flex-1 flex items-end gap-3 mb-8 px-2">
               {[30, 50, 45, 70, 60, 90, 85].map((h, i) => (
                 <motion.div
                   key={i}
                   initial={{ height: 0 }} animate={{ height: `${h}%` }}
                   transition={{ duration: 1.5, delay: 0.5 + i * 0.1, type: 'spring' }}
-                  className="flex-1 rounded-t-lg bg-gradient-to-t from-indigo-600 to-violet-400 opacity-80"
+                  className="flex-1 rounded-sm bg-gradient-to-t from-[#00f2ff]/80 to-[#00f2ff]/10 shadow-[0_0_10px_rgba(0,242,255,0.3)]"
                 />
               ))}
             </div>
 
-            {/* Floating Stats */}
+            {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                <div className="text-xs text-slate-400 font-bold uppercase mb-1">Income</div>
-                <div className="text-emerald-400 font-bold text-lg">+ $12,400</div>
+              <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 tracking-wider">Income</div>
+                <div className="text-[#00f2ff] font-bold text-lg drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">+$12.4k</div>
               </div>
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                <div className="text-xs text-slate-400 font-bold uppercase mb-1">Savings</div>
-                <div className="text-indigo-400 font-bold text-lg">+ 24%</div>
+              <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 tracking-wider">Growth</div>
+                <div className="text-white font-bold text-lg">+24%</div>
               </div>
             </div>
 
-            {/* Floating Element */}
+            {/* Floating Badge */}
             <motion.div
-              animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -right-8 top-20 bg-white p-4 rounded-2xl shadow-xl border border-white/20 transform rotate-12"
+              animate={{ y: [10, -10, 10] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-10 right-[-20px] bg-white text-slate-900 px-6 py-4 rounded-xl shadow-xl font-bold flex items-center gap-3 transform rotate-12"
             >
               <span className="text-2xl">🚀</span>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-500">Savings</div>
+                <div className="text-xl font-black">+24%</div>
+              </div>
             </motion.div>
+
           </motion.div>
         </motion.div>
 
       </div>
 
+      {/* FOOTER */}
       <div className="absolute bottom-6 left-0 right-0 text-center pointer-events-none">
-        <p className="text-slate-600 font-bold uppercase tracking-[0.3em] text-[10px] animate-pulse">Designed by Pramudi Lakshika</p>
+        <p className="text-slate-500 font-light tracking-[0.4em] text-[9px] uppercase">Designed by Pramudi Lakshika</p>
       </div>
     </div>
   );
