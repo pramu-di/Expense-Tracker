@@ -1180,54 +1180,6 @@ const Dashboard = () => {
 
         </AnimatePresence>
       </div>
-      {/* MAIN VIEW */}
-      <div
-        ref={(node) => {
-          // Store ref and add scroll listener
-          if (node) {
-            // We can't easily add listener here directly on render without effect cleanups,
-            // so we'll use a separate useEffect targeting this ref in a followup edit 
-            // OR use a callback ref approach if simple.
-            // Actually, simplest is to give it an ID or Ref and use UseEffect.
-            // Let's use a ref.
-            mainScrollRef.current = node;
-          }
-        }}
-        onScroll={(e) => setShowScrollTop(e.target.scrollTop > 300)}
-        className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative"
-      >
-        <header className="flex justify-between items-center mb-10 md:mb-10">
-          <div className="hidden md:block">
-            <motion.h2
-              key={view} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold tracking-tight"
-            >
-              {view.charAt(0).toUpperCase() + view.slice(1)}
-            </motion.h2>
-            <p className="text-slate-500 font-medium text-sm mt-1">Welcome back, {profileName}</p>
-          </div>
-          {/* Mobile View Title */}
-          <div className="md:hidden">
-            <h2 className="text-2xl font-bold tracking-tight">{view.charAt(0).toUpperCase() + view.slice(1)}</h2>
-          </div>
-
-          <motion.button
-            onClick={() => setDarkMode(prev => !prev)}
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className={`p-3 rounded-full shadow-lg border ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400' : 'bg-white border-slate-200 text-slate-800'}`}
-          >
-            {darkMode ? '☀️' : '🌙'}
-          </motion.button>
-        </header>
-
-        <AnimatePresence mode="wait">
-          {/* ... existing views ... */}
-          {/* TO AVOID REPLACING ALL CONTENT, I WILL TARGET THE WRAPPER DIV FIRST */}
-          {/* Wait, I cannot use 'replace_file_content' to inject logic easily without matching large blocks. */}
-          {/* Alternative: Split edits. 1. Add State/Ref. 2. Modifying the container div. 3. Adding the button at end. */}
-        </AnimatePresence>
-      </div>
-
       {/* SCROLL TO TOP BUTTON */}
       <AnimatePresence>
         {showScrollTop && (
