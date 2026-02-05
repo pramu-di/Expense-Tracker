@@ -8,6 +8,12 @@ const Login = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
+    useEffect(() => {
+        if (localStorage.getItem('token')) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [navigate]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -16,7 +22,7 @@ const Login = () => {
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('userName', res.data.user.name);
             localStorage.setItem('userId', res.data.user.id);
-            navigate('/dashboard');
+            navigate('/dashboard', { replace: true });
         } catch (err) {
             alert(err.response?.data?.error || "Login failed");
             setIsLoading(false);
