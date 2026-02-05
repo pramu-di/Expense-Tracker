@@ -113,8 +113,12 @@ const Dashboard = () => {
 
     if (SpeechRecognition) {
       const recog = new SpeechRecognition();
-      recog.continuous = true; // REQUESTED: Continuous listening
-      recog.interimResults = true; // REQUESTED: Interim results
+
+      // MOBILE OPTIMIZATION: Check user agent
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      recog.continuous = !isMobile; // Mobile: false (one shot), Desktop: true
+      recog.interimResults = true;
       recog.lang = 'en-US';
 
       // 2. Event Listeners
@@ -128,21 +132,33 @@ const Dashboard = () => {
       };
 
       recog.onresult = (event) => {
-        const currentTranscript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        setTranscript(currentTranscript);
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        // Only update if we have final text or if strictly necessary
+        // On mobile, since continuous=false, we might rely on the final result at the end.
+        // But to correct duplication, we prioritize storing FINAL results.
+        if (finalTranscript) {
+          setTranscript(prev => isMobile ? finalTranscript : prev + ' ' + finalTranscript);
+        } else if (interimTranscript) {
+          // Optional: visual feedback for interim, but don't save to 'transcript' state 
+          // used for processing to avoid "double processing"
+        }
       };
 
-      // 3. Error Logging (REQUESTED)
+      // 3. Error Logging
       recog.onerror = (event) => {
         console.error("Voice Recognition Error:", event.error);
         if (event.error === 'not-allowed') {
-          toast.error("Microphone access denied. Check permissions.");
-        } else if (event.error === 'no-speech') {
-          // Ignore/Silent
-        } else {
-          toast.error(`Voice Error: ${event.error}`);
+          toast.error("Microphone access denied.");
         }
         setListening(false);
       };
@@ -154,25 +170,33 @@ const Dashboard = () => {
   const resetTranscript = () => setTranscript("");
 
   useEffect(() => {
-    // Only update state from voice if actively listening and transcript exists
-    if (listening && transcript) {
-      const amountMatch = transcript.match(/(\d+)/);
-      if (amountMatch) setAmount(amountMatch[0]);
+    // DEBOUNCE LOGIC: Wait 800ms after speech stops to process
+    const timeoutId = setTimeout(() => {
+      // Only update state from voice if actively listening and transcript exists
+      if (transcript) {
+        // Clean transcript for processing
+        const cleanText = transcript.trim();
 
-      const matchedCategory = allCategories.find(cat => transcript.toLowerCase().includes(cat.toLowerCase()));
-      if (matchedCategory) setCategory(matchedCategory);
+        const amountMatch = cleanText.match(/(\d+)/);
+        if (amountMatch) setAmount(amountMatch[0]);
 
-      if (transcript.toLowerCase().includes('income')) setTransactionType('income');
-      if (transcript.toLowerCase().includes('expense')) setTransactionType('expense');
+        const matchedCategory = allCategories.find(cat => cleanText.toLowerCase().includes(cat.toLowerCase()));
+        if (matchedCategory) setCategory(matchedCategory);
 
-      if (transcript.toLowerCase().includes('monthly') || transcript.toLowerCase().includes('subscription')) {
-        setIsRecurring(true);
-        setBillingCycle('monthly');
+        if (cleanText.toLowerCase().includes('income')) setTransactionType('income');
+        if (cleanText.toLowerCase().includes('expense')) setTransactionType('expense');
+
+        if (cleanText.toLowerCase().includes('monthly') || cleanText.toLowerCase().includes('subscription')) {
+          setIsRecurring(true);
+          setBillingCycle('monthly');
+        }
+
+        setText(cleanText);
       }
+    }, 800);
 
-      setText(transcript);
-    }
-  }, [transcript, listening, allCategories]);
+    return () => clearTimeout(timeoutId);
+  }, [transcript, allCategories]);
 
   const toggleListening = () => {
     if (!recognition) {
