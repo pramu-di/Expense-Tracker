@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const Expense = require('./models/Expense'); 
-const User = require('./models/User'); 
+const Expense = require('./models/Expense');
+const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -54,6 +54,7 @@ app.post('/api/signup', async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: "User Created" });
     } catch (err) {
+        console.error("Signup Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
