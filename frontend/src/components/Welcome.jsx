@@ -15,22 +15,22 @@ const Welcome = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const particleCount = isMobile ? 8 : 25;
+  const particleCount = isMobile ? 8 : 20;
 
   return (
-    <div className="min-h-screen bg-[#0d0221] text-white flex flex-col items-center justify-center p-6 overflow-hidden relative selection:bg-[#00f2ff] selection:text-[#0d0221]">
+    <div className="min-h-screen bg-[#0f0c29] text-white flex flex-col items-center justify-center p-6 overflow-hidden relative selection:bg-fuchsia-500 selection:text-white">
 
-      {/* 1. CYBER BACKGROUND & GLOWS */}
+      {/* 1. REFINED BACKGROUND & GLOWS */}
       <div className="absolute inset-0 z-0">
-        {/* Main Gradient */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#1a0b2e] via-[#130725] to-[#0d0221] opacity-100" />
+        {/* Main Deep Twilight Gradient */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] opacity-100" />
 
-        {/* Neon Ambient Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#00f2ff]/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Ambient Blobs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-fuchsia-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* 2. PARTICLE WAVE / FLOATING LIGHTS */}
+      {/* 2. PARTICLE WAVE */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         {[...Array(particleCount)].map((_, i) => (
           <motion.div
@@ -47,7 +47,7 @@ const Welcome = () => {
               ease: "linear",
               delay: Math.random() * 5
             }}
-            className="absolute rounded-full bg-[#00f2ff] shadow-[0_0_10px_#00f2ff]"
+            className="absolute rounded-full bg-indigo-300 shadow-[0_0_10px_rgba(165,180,252,0.4)]"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
@@ -71,44 +71,43 @@ const Welcome = () => {
           <motion.div
             animate={{ y: [-5, 5, -5] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-[#00f2ff]/20 backdrop-blur-md shadow-[0_0_15px_rgba(0,242,255,0.1)]"
+            className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-indigo-400/30 backdrop-blur-md shadow-lg shadow-indigo-500/10"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f2ff] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00f2ff]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            <span className="text-[#00f2ff] text-xs font-bold uppercase tracking-[0.2em] drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">
-              SmartSpend v2.0
+            <span className="text-indigo-200 text-xs font-bold uppercase tracking-[0.2em]">
+              SmartSpend v2.0 Live
             </span>
           </motion.div>
 
           {/* Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-white drop-shadow-xl">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-white drop-shadow-2xl">
             Master Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ff] via-white to-[#00f2ff] drop-shadow-[0_0_20px_rgba(0,242,255,0.3)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400 drop-shadow-lg">
               Wealth
             </span>
           </h1>
 
-          <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed max-w-lg mx-auto md:mx-0">
-            Experience the future of personal finance. Elegant tracking, powerful insights, and total control—wrapped in a beautiful cyber-interface.
+          <p className="text-indigo-100/70 text-lg md:text-xl font-medium leading-relaxed max-w-lg mx-auto md:mx-0">
+            Experience the future of personal finance. Elegant tracking, powerful insights, and total control—all in one beautiful dashboard.
           </p>
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-5 pt-4 justify-center md:justify-start">
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px -5px rgba(0, 242, 255, 0.4)" }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-[#00f2ff] text-[#0d0221] font-black rounded-sm shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center gap-2 group uppercase tracking-wider relative overflow-hidden"
+              className="px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 flex items-center justify-center gap-2 group uppercase tracking-wider transition-all"
             >
-              <span className="relative z-10 group-hover:translate-x-1 transition-transform">Get Started</span>
-              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
+              Get Started <span className="group-hover:translate-x-1 transition-transform">→</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/signup')}
-              className="px-8 py-4 bg-transparent text-white font-bold rounded-sm border border-[#00f2ff]/30 hover:bg-[#00f2ff]/10 hover:border-[#00f2ff]/60 transition-all uppercase tracking-wider"
+              className="px-8 py-4 bg-white/5 text-white font-bold rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all uppercase tracking-wider"
             >
               Create Account
             </motion.button>
@@ -126,35 +125,35 @@ const Welcome = () => {
           <motion.div
             animate={{ y: [-15, 15, -15], rotateX: [2, -2, 2], rotateY: [-2, 2, -2] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-full max-w-md aspect-[4/5] bg-gradient-to-b from-white/5 to-transparent backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 flex flex-col overflow-hidden"
+            className="relative w-full max-w-md aspect-[4/5] bg-gradient-to-b from-[#1a1638]/60 to-[#1a1638]/40 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-2xl shadow-indigo-900/50 p-8 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-10">
-              <div className="w-12 h-12 rounded-xl bg-[#00f2ff]/20 border border-[#00f2ff]/30 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(0,242,255,0.2)]">⚡</div>
-              <div className="w-20 h-1 rounded-full bg-white/10" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl shadow-lg text-white">⚡</div>
+              <div className="w-20 h-2 rounded-full bg-white/10" />
             </div>
 
-            {/* Neon Bars */}
+            {/* Bars */}
             <div className="flex-1 flex items-end gap-3 mb-8 px-2">
               {[30, 50, 45, 70, 60, 90, 85].map((h, i) => (
                 <motion.div
                   key={i}
                   initial={{ height: 0 }} animate={{ height: `${h}%` }}
                   transition={{ duration: 1.5, delay: 0.5 + i * 0.1, type: 'spring' }}
-                  className="flex-1 rounded-sm bg-gradient-to-t from-[#00f2ff]/80 to-[#00f2ff]/10 shadow-[0_0_10px_rgba(0,242,255,0.3)]"
+                  className="flex-1 rounded-sm bg-gradient-to-t from-indigo-600 to-fuchsia-500 opacity-90 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
                 />
               ))}
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 tracking-wider">Income</div>
-                <div className="text-[#00f2ff] font-bold text-lg drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">+$12.4k</div>
+              <div className="p-4 rounded-xl bg-black/20 border border-white/5">
+                <div className="text-[10px] text-slate-300 font-bold uppercase mb-1 tracking-wider">Income</div>
+                <div className="text-emerald-400 font-bold text-lg drop-shadow-md">+$12.4k</div>
               </div>
-              <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 tracking-wider">Growth</div>
-                <div className="text-white font-bold text-lg">+24%</div>
+              <div className="p-4 rounded-xl bg-black/20 border border-white/5">
+                <div className="text-[10px] text-slate-300 font-bold uppercase mb-1 tracking-wider">Savings</div>
+                <div className="text-indigo-300 font-bold text-lg drop-shadow-md">+24%</div>
               </div>
             </div>
 
