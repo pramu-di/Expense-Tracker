@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -51,7 +51,9 @@ const Dashboard = () => {
   const [category, setCategory] = useState("Food");
   const [transactionType, setTransactionType] = useState("expense");
   const [editId, setEditId] = useState(null);
-  const [view, setView] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('tab') || 'dashboard';
+  const setView = (tab) => setSearchParams({ tab });
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
 
   useEffect(() => {
