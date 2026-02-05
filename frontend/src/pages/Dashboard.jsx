@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -41,7 +41,8 @@ import {
   Edit2,
   Save,
   Download,
-  Trash2
+  Trash2,
+  ArrowUp
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -484,6 +485,16 @@ const Dashboard = () => {
   // Mobile Menu State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // --- SCROLL TO TOP LOGIC ---
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const mainScrollRef = useRef(null);
+
+  const scrollToTop = () => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // --- UI CONSTANTS ---
   const glassCard = `backdrop-blur-xl ${darkMode ? 'bg-slate-900/70 border-white/10' : 'bg-white/70 border-black/5'} border shadow-2xl rounded-3xl p-8 transition-all hover:bg-opacity-80 duration-300`;
   const glassInput = `w-full p-4 px-6 rounded-2xl ${darkMode ? 'bg-black/20 text-white placeholder-white/30 focus:bg-black/30' : 'bg-slate-100 text-slate-900 placeholder-slate-400 focus:bg-white'} border border-transparent focus:border-indigo-500 outline-none font-medium transition-all`;
@@ -615,7 +626,11 @@ const Dashboard = () => {
       </div>
 
       {/* MAIN VIEW */}
-      <div className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative">
+      <div
+        ref={mainScrollRef}
+        onScroll={(e) => setShowScrollTop(e.target.scrollTop > 300)}
+        className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative"
+      >
         <header className="flex justify-between items-center mb-10 md:mb-10">
           <div className="hidden md:block">
             <motion.h2
@@ -1165,6 +1180,69 @@ const Dashboard = () => {
 
         </AnimatePresence>
       </div>
+      {/* MAIN VIEW */}
+      <div
+        ref={(node) => {
+          // Store ref and add scroll listener
+          if (node) {
+            // We can't easily add listener here directly on render without effect cleanups,
+            // so we'll use a separate useEffect targeting this ref in a followup edit 
+            // OR use a callback ref approach if simple.
+            // Actually, simplest is to give it an ID or Ref and use UseEffect.
+            // Let's use a ref.
+            mainScrollRef.current = node;
+          }
+        }}
+        onScroll={(e) => setShowScrollTop(e.target.scrollTop > 300)}
+        className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative"
+      >
+        <header className="flex justify-between items-center mb-10 md:mb-10">
+          <div className="hidden md:block">
+            <motion.h2
+              key={view} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+              className="text-3xl font-bold tracking-tight"
+            >
+              {view.charAt(0).toUpperCase() + view.slice(1)}
+            </motion.h2>
+            <p className="text-slate-500 font-medium text-sm mt-1">Welcome back, {profileName}</p>
+          </div>
+          {/* Mobile View Title */}
+          <div className="md:hidden">
+            <h2 className="text-2xl font-bold tracking-tight">{view.charAt(0).toUpperCase() + view.slice(1)}</h2>
+          </div>
+
+          <motion.button
+            onClick={() => setDarkMode(prev => !prev)}
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            className={`p-3 rounded-full shadow-lg border ${darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400' : 'bg-white border-slate-200 text-slate-800'}`}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </motion.button>
+        </header>
+
+        <AnimatePresence mode="wait">
+          {/* ... existing views ... */}
+          {/* TO AVOID REPLACING ALL CONTENT, I WILL TARGET THE WRAPPER DIV FIRST */}
+          {/* Wait, I cannot use 'replace_file_content' to inject logic easily without matching large blocks. */}
+          {/* Alternative: Split edits. 1. Add State/Ref. 2. Modifying the container div. 3. Adding the button at end. */}
+        </AnimatePresence>
+      </div>
+
+      {/* SCROLL TO TOP BUTTON */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            whileHover={{ opacity: 1, y: -5 }}
+            onClick={scrollToTop}
+            className={`fixed bottom-8 right-8 p-3 rounded-full shadow-xl z-50 transition-all ${darkMode ? 'bg-slate-700/50 text-white hover:bg-slate-700/80' : 'bg-white/50 text-slate-900 hover:bg-white/80'} backdrop-blur-md border ${darkMode ? 'border-white/10' : 'border-black/5'}`}
+          >
+            <ArrowUp size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
