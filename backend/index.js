@@ -22,7 +22,8 @@ const connectDB = async () => {
         isConnected = db.connections[0].readyState;
         console.log("Database Connected!");
     } catch (err) {
-        console.error("Database Connection Error:", err);
+        console.error("Database Connection Error Stack:", err);
+        console.error("Database Connection Error Message:", err.message);
         throw err;
     }
 };
@@ -33,7 +34,9 @@ app.use(async (req, res, next) => {
         await connectDB();
         next();
     } catch (err) {
-        res.status(500).json({ error: "Database connection failed" });
+        console.error("Middleware Database Connection Error Stack:", err);
+        console.error("Middleware Database Connection Error Message:", err.message);
+        res.status(500).json({ error: "Database connection failed", details: err.message });
     }
 });
 
