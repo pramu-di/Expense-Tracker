@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+// import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'; // Replaced with native API
 import toast, { Toaster } from 'react-hot-toast';
 import {
   LayoutDashboard,
@@ -100,8 +100,56 @@ const Dashboard = () => {
 
   const avatars = ["👩‍💻", "🦸‍♂️", "🦄", "🚀", "🐱", "🐶", "🦁", "🤖", "👽", "👻"];
 
-  // --- VOICE RECOGNITION SETUP ---
-  const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  // --- NATIVE VOICE RECOGNITION SETUP ---
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [recognition, setRecognition] = useState(null);
+
+  useEffect(() => {
+    // 1. Check browser support (including Mobile Safari)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const recog = new SpeechRecognition();
+      recog.continuous = true; // REQUESTED: Continuous listening
+      recog.interimResults = true; // REQUESTED: Interim results
+      recog.lang = 'en-US';
+
+      // 2. Event Listeners
+      recog.onstart = () => {
+        setListening(true);
+        toast("Listening...", { icon: '🎙️' });
+      };
+
+      recog.onend = () => {
+        setListening(false);
+      };
+
+      recog.onresult = (event) => {
+        const currentTranscript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setTranscript(currentTranscript);
+      };
+
+      // 3. Error Logging (REQUESTED)
+      recog.onerror = (event) => {
+        console.error("Voice Recognition Error:", event.error);
+        if (event.error === 'not-allowed') {
+          toast.error("Microphone access denied. Check permissions.");
+        } else if (event.error === 'no-speech') {
+          // Ignore/Silent
+        } else {
+          toast.error(`Voice Error: ${event.error}`);
+        }
+        setListening(false);
+      };
+
+      setRecognition(recog);
+    }
+  }, []);
+
+  const resetTranscript = () => setTranscript("");
 
   useEffect(() => {
     // Only update state from voice if actively listening and transcript exists
@@ -124,29 +172,21 @@ const Dashboard = () => {
     }
   }, [transcript, listening, allCategories]);
 
-  const toggleListening = async () => {
-    // Debugging Logs
-    console.log("Secure Context:", window.isSecureContext);
-    console.log("Browser Supports Speech:", browserSupportsSpeechRecognition);
+  const toggleListening = () => {
+    if (!recognition) {
+      toast.error("Browser doesn't support speech recognition.");
+      return;
+    }
 
     if (listening) {
-      SpeechRecognition.stopListening();
-      toast.success("Voice command captured!");
+      recognition.stop();
+      toast.success("Voice ended.");
     } else {
-      if (!browserSupportsSpeechRecognition) {
-        toast.error("Browser doesn't support speech recognition.");
-        return;
-      }
-
-      // Explicitly request permission
+      resetTranscript();
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        resetTranscript();
-        SpeechRecognition.startListening({ continuous: false });
-        toast("Listening...", { icon: '🎙️' });
+        recognition.start();
       } catch (err) {
-        console.error("Microphone Permission Error:", err);
-        toast.error("Microphone access denied. Please allow permissions.");
+        console.error("Failed to start recognition:", err);
       }
     }
   };
