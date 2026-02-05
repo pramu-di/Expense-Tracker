@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Expense = require('./models/Expense');
@@ -8,7 +9,10 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ["https://expense-tracker-frontend-tau.vercel.app", "http://localhost:5173"], // Add your Vercel frontend URL here
+    credentials: true
+}));
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/expenseDB';
 
@@ -20,7 +24,7 @@ const connectDB = async () => {
 
         const db = await mongoose.connect(MONGO_URI);
         isConnected = db.connections[0].readyState;
-        console.log("Database Connected!");
+        console.log("MongoDB Connected Successfully!");
     } catch (err) {
         console.error("Database Connection Error Stack:", err);
         console.error("Database Connection Error Message:", err.message);
@@ -47,14 +51,27 @@ app.get('/api', (req, res) => {
 
 // 1. Signup Route
 app.post('/api/signup', async (req, res) => {
-    const { name, email, password } = req.body;
     try {
+        console.log("Raw Body:", req.body); // Check if body parsing works
+        const { name, email, password } = req.body;
+        console.log("Signup attempt for:", email);
+        if (!name || !email || !password) {
+            console.log("Signup failed: Missing fields");
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ name, email, password: hashedPassword });
         await newUser.save();
+
+        console.log("User created successfully:", email);
         res.status(201).json({ message: "User Created" });
     } catch (err) {
-        console.error("Signup Error:", err);
+        console.error("SIGNUP API ERROR:", err);
+        // Handle duplicate key error specifically
+        if (err.code === 11000) {
+            return res.status(400).json({ error: "Email already exists" });
+        }
         res.status(500).json({ error: err.message });
     }
 });
@@ -63,13 +80,19 @@ app.post('/api/signup', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
+        console.log("Login attempt for:", email);
         const user = await User.findOne({ email });
+        console.log("User found:", user ? user._id : "No");
+
         if (!user) return res.status(400).json({ error: "User not found" });
 
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log("Password is match:", isMatch);
+
         if (!isMatch) return res.status(400).json({ error: "Invalid password" });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret_key", { expiresIn: '1h' });
+        console.log("Token generated successfully");
         res.json({ token, user: { name: user.name, id: user._id } });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -205,7 +228,11 @@ app.use((req, res) => {
 
 const PORT = 5000;
 if (require.main === module) {
-    app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+    connectDB().then(() => {
+        app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+    }).catch(err => {
+        console.error("Failed to connect to DB", err);
+    });
 }
 
 module.exports = app;

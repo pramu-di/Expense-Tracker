@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 
 const expenseSchema = new mongoose.Schema({
-    text: { type: String, required: true }, 
+    text: { type: String, required: true },
     amount: { type: Number, required: true },
     type: { type: String, enum: ['expense', 'income'], default: 'expense' },
     category: { type: String, required: true },
@@ -10,7 +10,7 @@ const expenseSchema = new mongoose.Schema({
     isRecurring: { type: Boolean, default: false },
     billingCycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
     nextBillingDate: { type: Date },
-    date: { type: Date, default: Date.now } 
-
+    date: { type: Date, default: Date.now }
+});
 
 module.exports = mongoose.model('Expense', expenseSchema);
