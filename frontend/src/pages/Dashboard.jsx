@@ -107,6 +107,7 @@ const Dashboard = () => {
   // OCR State
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState("");
+  const [isLowConfidence, setIsLowConfidence] = useState(false);
   const fileInputRef = useRef(null);
 
   const navigate = useNavigate();
@@ -304,12 +305,16 @@ const Dashboard = () => {
       });
 
       setScanProgress("Scanning Receipt...");
-      const { data: { text } } = await worker.recognize(processedImageIdx);
+      setScanProgress("Scanning Receipt...");
+      const { data } = await worker.recognize(processedImageIdx);
       await worker.terminate();
 
-      console.log("OCR Text:", text); // Debugging
-      parseReceiptData(text);
-      toast.success("Receipt scanned!");
+      const confidence = data.confidence;
+      // console.log("OCR Confidence:", confidence);
+      setIsLowConfidence(confidence < 70);
+
+      parseReceiptData(data.lines);
+      toast.success(confidence < 70 ? "Receipt scanned (Low Confidence)" : "Receipt scanned!");
     } catch (err) {
       console.error(err);
       toast.error("Failed to scan receipt.");
@@ -319,59 +324,88 @@ const Dashboard = () => {
     }
   };
 
-  const parseReceiptData = (text) => {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const parseReceiptData = (linesData) => {
+    // Extract text lines from Tesseract data
+    const lines = linesData.map(line => line.text.trim()).filter(l => l.length > 0);
+
     let foundAmount = 0;
     let foundCategory = "Other";
     let foundDescription = "";
 
-    // 1. Merchant Name Detection (First 3 lines)
+    // --- 1. MERCHANT NAME DETECTION (Heuristic) ---
+    // Look at first 3 meaningful lines
     for (let i = 0; i < Math.min(lines.length, 3); i++) {
-      // Skip lines that look like dates or mostly numbers
-      if (!/\d{2}\/\d{2}/.test(lines[i]) && lines[i].length > 3 && !/^\d+$/.test(lines[i])) {
-        foundDescription = lines[i]; // Best guess for merchant
+      const line = lines[i];
+      // Filter out:
+      // - Dates (01/01/2024 or 2024-01-01)
+      // - Phone numbers or purely numeric lines
+      // - Common Headers ("Tax Invoice", "Receipt", "Customer Copy")
+      const isDate = /\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/.test(line);
+      const isNumeric = /^[\d\s.,\-:()]+$/.test(line);
+      const isHeader = /tax|invoice|receipt|copy|bill|cash/i.test(line);
+
+      if (!isDate && !isNumeric && !isHeader && line.length > 3) {
+        foundDescription = line.replace(/[^\w\s'&]/g, '').trim(); // Clean symbols
         break;
       }
     }
     if (!foundDescription) foundDescription = "Scanned Receipt";
 
 
-    // 2. Logic Variables
-    const priceRegex = /(\d+[.,]\d{2})/g;
-    let potentialPrices = [];
+    // --- 2. CATEGORY DETECTION (Keyword) ---
+    const allText = lines.join(' ').toLowerCase();
+    if (/kfc|mcdonald|pizza|burger|restaurant|cafe|coffee|starbucks|bakery|food/i.test(allText)) foundCategory = "Food";
+    else if (/uber|lyft|taxi|fuel|petrol|gas|train|bus|transport|cab/i.test(allText)) foundCategory = "Transport";
+    else if (/walmart|target|costco|grocery|market|supermarket|keells|cargills/i.test(allText)) foundCategory = "Shopping";
+    else if (/pharmacy|doctor|hospital|clinic|medicare|health/i.test(allText)) foundCategory = "Health";
+    else if (/bill|dialog|slt|ceb|water|lease|rent|transfer|deposit|boc|peoples|sampath|hnb|bank/i.test(allText)) foundCategory = "Bills";
 
-    lines.forEach(line => {
-      const lowerLine = line.toLowerCase();
 
-      // KEYWORD DETECTION (Category)
-      if (/kfc|mcdonald|pizza|burger|restaurant|cafe|coffee|starbucks|bakery/i.test(line)) foundCategory = "Food";
-      if (/uber|lyft|taxi|fuel|petrol|gas|train|bus|transport/i.test(line)) foundCategory = "Transport";
-      if (/walmart|target|costco|grocery|market|supermarket|keells|cargills/i.test(line)) foundCategory = "Shopping";
-      if (/pharmacy|doctor|hospital|clinic|medicare/i.test(line)) foundCategory = "Health";
-      if (/bill|dialog|slt|ceb|water|lease|rent|transfer|deposit|boc|peoples|sampath|hnb/i.test(line)) foundCategory = "Bills";
+    // --- 3. AMOUNT EXTRACTION (Advanced Heuristics) ---
+    const currencyRegex = /(\d{1,3}(,\d{3})*(\.\d{2})?)/g; // Matches 1,200.50 or 500.00
+    // Key: Look for "Total" and then check the SAME line or the NEXT line
 
-      // EXTRACT PRICES
-      const matches = line.match(priceRegex);
-      if (matches) {
-        matches.forEach(m => {
-          // Remove commas and currency symbols if caught
-          let val = parseFloat(m.replace(/,/g, ''));
-          if (!isNaN(val)) potentialPrices.push(val);
-        });
-      }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].toLowerCase();
+      // Keywords that usually precede the final amount
+      if (/total|net amount|grand total|balance|due|pay|amount due/i.test(line) && !/sub( |-)?total/i.test(line)) {
 
-      // TOTAL DETECTION (Specific Keywords)
-      if (/total|amount|net|grand|balance|due|pay/i.test(line) && !/sub/i.test(line)) {
-        const matches = line.match(priceRegex);
-        if (matches) {
-          foundAmount = parseFloat(matches[matches.length - 1].replace(/,/g, ''));
+        // Strategies:
+        // A. Check SAME line (e.g., "Total: 1500.00")
+        const sameLineMatches = lines[i].match(currencyRegex);
+        if (sameLineMatches) {
+          // Take the last number on the line (usually the total)
+          const val = parseFloat(sameLineMatches[sameLineMatches.length - 1].replace(/,/g, ''));
+          if (!isNaN(val)) { foundAmount = val; break; }
+        }
+
+        // B. Check NEXT line (e.g., "Total" \n "1500.00")
+        if (i + 1 < lines.length) {
+          const nextLineMatches = lines[i + 1].match(currencyRegex);
+          if (nextLineMatches) {
+            const val = parseFloat(nextLineMatches[0].replace(/,/g, '')); // First number on next line
+            if (!isNaN(val)) { foundAmount = val; break; }
+          }
         }
       }
-    });
+    }
 
-    // Fallback: Largest number if no "Total" keyword found
-    if (foundAmount === 0 && potentialPrices.length > 0) {
-      foundAmount = Math.max(...potentialPrices);
+    // Fallback: If no "Total" keyword found, look at the bottom 40% of the receipt for the largest number
+    if (foundAmount === 0) {
+      const bottomLines = lines.slice(Math.floor(lines.length * 0.6));
+      const potentialAmounts = [];
+      bottomLines.forEach(l => {
+        const matches = l.match(currencyRegex);
+        if (matches) {
+          matches.forEach(m => {
+            const val = parseFloat(m.replace(/,/g, ''));
+            if (!isNaN(val)) potentialAmounts.push(val);
+          });
+        }
+      });
+      if (potentialAmounts.length > 0) {
+        foundAmount = Math.max(...potentialAmounts);
+      }
     }
 
     if (foundAmount > 0) setAmount(foundAmount);
@@ -1070,7 +1104,15 @@ const Dashboard = () => {
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"><span className="text-xs">▼</span></div>
                     </div>
 
-                    <input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} className={glassInput} required />
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className={`${glassInput} ${isLowConfidence && amount ? 'ring-2 ring-yellow-500/50 bg-yellow-500/10' : ''}`}
+                      required
+                    />
+                    {isLowConfidence && amount && <p className="text-[10px] text-yellow-500 mt-1 ml-1">Check Amount (Low Confidence)</p>}
 
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
                       <div className={`w-5 h-5 rounded border flex items-center justify-center ${isRecurring ? 'bg-indigo-500 border-indigo-500' : 'border-slate-500'}`}>
