@@ -10,6 +10,7 @@ const expenseSchema = new mongoose.Schema({
     isRecurring: { type: Boolean, default: false },
     billingCycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
     nextBillingDate: { type: Date },
+    mood: { type: String, enum: ['Happy', 'Neutral', 'Stressed', 'Impulsive', ''], default: '' },
     date: { type: Date, default: Date.now }
 });
 

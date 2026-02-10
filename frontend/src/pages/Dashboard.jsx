@@ -51,6 +51,7 @@ const Dashboard = () => {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");
   const [transactionType, setTransactionType] = useState("expense");
+  const [mood, setMood] = useState(""); // Mood State
   const [editId, setEditId] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('tab') || 'dashboard';
@@ -83,6 +84,7 @@ const Dashboard = () => {
   // Profile & User State
   const [profileName, setProfileName] = useState(localStorage.getItem('userName') || "Pramu");
   const [savingGoal, setSavingGoal] = useState(50000);
+  const [overallBudget, setOverallBudget] = useState(0); // Added Overall Budget State
   const [currency, setCurrency] = useState("LKR");
   const [profileAvatar, setProfileAvatar] = useState("👩‍💻");
   const [joinedDate, setJoinedDate] = useState(null);
@@ -236,6 +238,7 @@ const Dashboard = () => {
         setCurrency(settings.currency || "LKR");
         // setDarkMode(settings.darkMode !== undefined ? settings.darkMode : true); // Removed to avoid overriding localStorage
         setSavingGoal(settings.savingGoal || 50000);
+        setOverallBudget(settings.overallBudget || 0);
       }
       if (customCategories) setCustomCategories(customCategories);
       if (budgets) setBudgets(budgets);
@@ -248,7 +251,7 @@ const Dashboard = () => {
   const updateSettings = async () => {
     try {
       await axios.put(`/api/user/${userId}/settings`, {
-        settings: { currency, darkMode, savingGoal }
+        settings: { currency, darkMode, savingGoal, overallBudget }
       });
       toast.success("Settings Saved Successfully!");
     } catch (err) { toast.error("Failed to save settings."); }
@@ -383,7 +386,8 @@ const Dashboard = () => {
 
     const payload = {
       text, amount: Number(amount), category, type: transactionType, userId,
-      isRecurring, billingCycle, nextBillingDate: isRecurring ? nextBillingDate : null
+      isRecurring, billingCycle, nextBillingDate: isRecurring ? nextBillingDate : null,
+      mood // Added mood to payload
     };
 
     try {
@@ -397,7 +401,7 @@ const Dashboard = () => {
         setExpenses([...expenses, res.data]);
         toast.success("Transaction Added!");
       }
-      setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate("");
+      setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate(""); setMood(""); // Reset Mood
       resetTranscript(); // Clear voice buffer
     } catch (err) {
       toast.error("Failed to save transaction.");
@@ -474,6 +478,24 @@ const Dashboard = () => {
       tips.push({
         icon: weeklyTrend.trend === 'up' ? <TrendingUp size={20} /> : <TrendingDown size={20} />,
         text: `You spent ${weeklyTrend.pct}% ${weeklyTrend.trend === 'up' ? 'MORE' : 'LESS'} this week compared to last week.`
+      });
+    }
+
+
+    // Mood Insights
+    const impulsiveSpent = currentMonthTransactions.filter(t => t.mood === 'Impulsive').reduce((a, c) => a + c.amount, 0);
+    if (impulsiveSpent > 0) {
+      tips.push({
+        icon: <AlertTriangle size={20} />,
+        text: `You spent ${currency} ${impulsiveSpent.toLocaleString()} on 'Impulsive' purchases this month.`
+      });
+    }
+
+    const stressedSpent = currentMonthTransactions.filter(t => t.mood === 'Stressed').reduce((a, c) => a + c.amount, 0);
+    if (stressedSpent > (totalExpense * 0.2)) {
+      tips.push({
+        icon: <Zap size={20} />,
+        text: `Stress spending is high! It accounts for over 20% of your expenses.`
       });
     }
 
@@ -729,6 +751,28 @@ const Dashboard = () => {
                     )}
                   </div>
                 </motion.div>
+
+                {/* OVERALL BUDGET TRACKER */}
+                {overallBudget > 0 && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${glassCard} !p-6 md:col-span-1`}>
+                    <h3 className="font-bold mb-4 flex items-center gap-2 text-indigo-400 text-sm uppercase tracking-wider"><Target size={18} /> Overall Limit</h3>
+                    <div>
+                      <div className="flex justify-between text-xs font-bold mb-1">
+                        <span>Total Spent</span>
+                        <span className={`${totalExpense > overallBudget ? 'text-rose-500' : 'text-slate-400'}`}>{totalExpense} / {overallBudget}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-700/30 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${totalExpense > overallBudget ? 'bg-rose-500' : (totalExpense / overallBudget > 0.8 ? 'bg-yellow-500' : 'bg-indigo-500')}`}
+                          style={{ width: `${Math.min(100, (totalExpense / overallBudget) * 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2 text-right">
+                        {totalExpense > overallBudget ? 'Budget Exceeded!' : `${(overallBudget - totalExpense).toLocaleString()} remaining`}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               {/* CHARTS & FORM */}
@@ -784,6 +828,19 @@ const Dashboard = () => {
                     <div className="grid grid-cols-2 gap-2 p-1 bg-slate-500/10 rounded-2xl mb-4 relative">
                       <button type="button" onClick={() => setTransactionType('expense')} className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${transactionType === 'expense' ? 'bg-rose-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Expense</button>
                       <button type="button" onClick={() => setTransactionType('income')} className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${transactionType === 'income' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Income</button>
+                    </div>
+
+                    {/* MOOD SELECTOR */}
+                    <div className="flex gap-2 justify-between mb-2">
+                      {['Happy', 'Neutral', 'Stressed', 'Impulsive'].map(m => (
+                        <button
+                          key={m} type="button"
+                          onClick={() => setMood(mood === m ? "" : m)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${mood === m ? 'bg-indigo-500 text-white border-indigo-500' : 'border-slate-500/30 text-slate-400 hover:bg-slate-500/10'}`}
+                        >
+                          {m}
+                        </button>
+                      ))}
                     </div>
 
                     <input type="text" placeholder={listening ? "Listening..." : "Description (e.g. Netflix)"} value={text} onChange={(e) => setText(e.target.value)} className={glassInput} required />
@@ -874,7 +931,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className={`${glassCard} flex flex-col justify-center`}>
                   <h3 className="font-bold mb-2 text-slate-500 uppercase tracking-wider text-xs flex items-center gap-2"><CreditCard size={14} /> Fixed Monthly Cost</h3>
-                  <div className="text-5xl font-bold text-white tracking-tight">
+                  <div className={`text-5xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                     {currency} {recurringExpenses.reduce((a, c) => a + (c.billingCycle === 'monthly' ? c.amount : c.amount / 12), 0).toFixed(0).toLocaleString()}
                   </div>
                 </div>
@@ -1062,17 +1119,17 @@ const Dashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                       <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Total Income</p>
-                      <p className="text-2xl font-bold text-white">{currency} {expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
                     </div>
                     <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20">
                       <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Total Spent</p>
-                      <p className="text-2xl font-bold text-white">{currency} {expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
                     </div>
                     <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 col-span-2">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Net Worth</p>
-                          <p className="text-4xl font-bold text-white">{currency} {(expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0) - expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0)).toLocaleString()}</p>
+                          <p className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {(expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0) - expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0)).toLocaleString()}</p>
                         </div>
                         <div className="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
                           <Shield size={32} />
@@ -1125,6 +1182,18 @@ const Dashboard = () => {
                     <option value="EUR" className="text-black">EUR (€)</option>
                     <option value="GBP" className="text-black">GBP (£)</option>
                   </select>
+                </div>
+
+                {/* Overall Budget Setting */}
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/5 flex justify-between items-center">
+                  <span className="font-bold ml-2">Overall Monthly Budget</span>
+                  <input
+                    type="number"
+                    value={overallBudget}
+                    onChange={(e) => setOverallBudget(Number(e.target.value))}
+                    className="bg-transparent font-bold outline-none border-none text-right text-indigo-400 w-32 cursor-pointer"
+                    placeholder="Set Limit"
+                  />
                 </div>
 
                 {/* Budget Settings */}

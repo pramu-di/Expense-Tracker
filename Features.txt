@@ -1,0 +1,76 @@
+Dashboard page
+
+1.Theme mode
+
+2\. smart insights
+
+3\. monthly budget expense 
+
+4\. spending analysis chart 
+
+5.entry manual,voice
+
+6.recurring subscriptions
+
+7.recent transaction list(date,description,category,amount)
+
+
+
+History page 
+
+
+
+8.filter ledger 
+
+&nbsp;      Search transactions(search bar,categry dropdown,date range selection,report download)
+
+9.income,expense,netflow amount display
+
+10.full transaction history
+
+&nbsp;
+
+Subscription page 
+
+
+
+11.fixed monthly cost (light theme ekedi penne na)
+
+12.Add subscription
+
+13.Active subscription display
+
+
+
+profile page
+
+
+
+14.export data
+
+15.financial passport(total income,total apent,net worth)
+
+16.trophy room(Saver Streak
+
+Net balance is positive.,Budget Warrior
+
+Expenses < 50% of income.,High Roller
+
+Earned > 50k in one go.,Power User
+
+Added > 5 transactions.,Goal Crusher
+
+Hit saving goal!)
+
+
+
+settings page 
+
+
+
+17.currency update
+
+18.category budget set
+
+19.custom categories
+

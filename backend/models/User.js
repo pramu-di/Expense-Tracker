@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     settings: {
         currency: { type: String, default: 'LKR' },
         darkMode: { type: Boolean, default: false },
-        savingGoal: { type: Number, default: 50000 }
+        savingGoal: { type: Number, default: 50000 },
+        overallBudget: { type: Number, default: 0 }
     },
     customCategories: [{ type: String }],
     budgets: { type: Map, of: Number, default: {} },
