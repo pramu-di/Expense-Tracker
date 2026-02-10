@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2 } from 'lucide-react'; // Added Loader2
 // import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'; // Replaced with native API
 import toast, { Toaster } from 'react-hot-toast';
 import {
@@ -100,6 +101,7 @@ const Dashboard = () => {
 
   // Prediction State
   const [predictions, setPredictions] = useState(null);
+  const [isPredicting, setIsPredicting] = useState(false);
 
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -236,9 +238,11 @@ const Dashboard = () => {
 
   const fetchPredictions = async () => {
     try {
+      setIsPredicting(true);
       const res = await axios.get(`/api/predict-budget/${userId}`);
       setPredictions(res.data);
     } catch (err) { console.error("Failed to fetch predictions", err); }
+    finally { setIsPredicting(false); }
   };
 
   const fetchUserData = async () => {
@@ -407,10 +411,12 @@ const Dashboard = () => {
         setExpenses(expenses.map(exp => exp._id === editId ? res.data : exp));
         setEditId(null);
         toast.success("Transaction Updated!");
+        fetchPredictions(); // Auto-refresh predictions
       } else {
         const res = await axios.post('/api/expenses', payload);
         setExpenses([...expenses, res.data]);
         toast.success("Transaction Added!");
+        fetchPredictions(); // Auto-refresh predictions
       }
       setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate(""); setMood(""); // Reset Mood
       resetTranscript(); // Clear voice buffer
@@ -793,7 +799,11 @@ const Dashboard = () => {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${glassCard} border-indigo-500/20 bg-gradient-to-br from-indigo-900/10 to-purple-900/10`}>
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
-                      <h3 className="font-bold text-xl flex items-center gap-2 text-indigo-400"><Target size={24} /> Future Me: Next Month Forecast</h3>
+                      <h3 className="font-bold text-xl flex items-center gap-2 text-indigo-400">
+                        <Target size={24} />
+                        Future Me: Next Month Forecast
+                        {isPredicting && <Loader2 size={20} className="animate-spin text-slate-400 ml-2" />}
+                      </h3>
                       <p className="text-sm text-slate-500 mt-1">Based on your last 3 months of spending habits.</p>
                     </div>
                     <div className="text-right">
