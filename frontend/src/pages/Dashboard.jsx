@@ -252,20 +252,59 @@ const Dashboard = () => {
   };
 
   // --- OCR / RECEIPT SCANNING LOGIC ---
+  const preprocessImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Image Processing: Grayscale & Contrast
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            const contrast = 1.2; // Increase contrast by 20%
+            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            const color = factor * (avg - 128) + 128;
+            data[i] = color;     // Red
+            data[i + 1] = color; // Green
+            data[i + 2] = color; // Blue
+          }
+          ctx.putImageData(imgData, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setScanning(true);
-    setScanProgress("Initializing OCR...");
+    setScanProgress("Preprocessing Image...");
 
     try {
+      const processedImageIdx = await preprocessImage(file);
+      setScanProgress("Initializing OCR Engine...");
+
       const worker = await createWorker();
-      // await worker.loadLanguage('eng');
-      // await worker.initialize('eng');
+
+      // Speed Optimization: Whitelist characters
+      await worker.setParameters({
+        tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,$-:/%&@',
+      });
 
       setScanProgress("Scanning Receipt...");
-      const { data: { text } } = await worker.recognize(file);
+      const { data: { text } } = await worker.recognize(processedImageIdx);
       await worker.terminate();
 
       console.log("OCR Text:", text); // Debugging
@@ -281,35 +320,48 @@ const Dashboard = () => {
   };
 
   const parseReceiptData = (text) => {
-    const lines = text.split('\n');
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     let foundAmount = 0;
     let foundCategory = "Other";
-    let foundDescription = "Scanned Receipt";
+    let foundDescription = "";
 
-    // 1. Try to find the "Total" line
-    const totalRegex = /total/i;
-    const priceRegex = /(\d+[.,]\d{2})/g; // Simple regex for prices like 12.99 or 1,200.00
+    // 1. Merchant Name Detection (First 3 lines)
+    for (let i = 0; i < Math.min(lines.length, 3); i++) {
+      // Skip lines that look like dates or mostly numbers
+      if (!/\d{2}\/\d{2}/.test(lines[i]) && lines[i].length > 3 && !/^\d+$/.test(lines[i])) {
+        foundDescription = lines[i]; // Best guess for merchant
+        break;
+      }
+    }
+    if (!foundDescription) foundDescription = "Scanned Receipt";
 
+
+    // 2. Logic Variables
+    const priceRegex = /(\d+[.,]\d{2})/g;
     let potentialPrices = [];
 
     lines.forEach(line => {
-      // Look for keywords for category
-      if (/kfc|mcdonald|pizza|burger|restaurant|cafe|coffee|starbucks/i.test(line)) foundCategory = "Food";
-      if (/uber|lyft|taxi|fuel|petrol|gas|train|bus/i.test(line)) foundCategory = "Transport";
-      if (/walmart|target|costco|grocery|market/i.test(line)) foundCategory = "Shopping";
-      if (/pharmacy|doctor|hospital|clinic/i.test(line)) foundCategory = "Health";
+      const lowerLine = line.toLowerCase();
 
-      // Extract prices
+      // KEYWORD DETECTION (Category)
+      if (/kfc|mcdonald|pizza|burger|restaurant|cafe|coffee|starbucks|bakery/i.test(line)) foundCategory = "Food";
+      if (/uber|lyft|taxi|fuel|petrol|gas|train|bus|transport/i.test(line)) foundCategory = "Transport";
+      if (/walmart|target|costco|grocery|market|supermarket|keells|cargills/i.test(line)) foundCategory = "Shopping";
+      if (/pharmacy|doctor|hospital|clinic|medicare/i.test(line)) foundCategory = "Health";
+      if (/bill|dialog|slt|ceb|water|lease|rent|transfer|deposit|boc|peoples|sampath|hnb/i.test(line)) foundCategory = "Bills";
+
+      // EXTRACT PRICES
       const matches = line.match(priceRegex);
       if (matches) {
         matches.forEach(m => {
+          // Remove commas and currency symbols if caught
           let val = parseFloat(m.replace(/,/g, ''));
           if (!isNaN(val)) potentialPrices.push(val);
         });
       }
 
-      // Try to find exact "Total" line
-      if (totalRegex.test(line)) {
+      // TOTAL DETECTION (Specific Keywords)
+      if (/total|amount|net|grand|balance|due|pay/i.test(line) && !/sub/i.test(line)) {
         const matches = line.match(priceRegex);
         if (matches) {
           foundAmount = parseFloat(matches[matches.length - 1].replace(/,/g, ''));
@@ -317,14 +369,14 @@ const Dashboard = () => {
       }
     });
 
-    // Fallback: If no "Total" keyword found, take the largest number (heuristic)
+    // Fallback: Largest number if no "Total" keyword found
     if (foundAmount === 0 && potentialPrices.length > 0) {
       foundAmount = Math.max(...potentialPrices);
     }
 
     if (foundAmount > 0) setAmount(foundAmount);
     setCategory(foundCategory);
-    if (!text.trim()) setText(foundDescription); // Only if empty
+    setText(foundDescription);
   };
 
   const fetchUserData = async () => {
