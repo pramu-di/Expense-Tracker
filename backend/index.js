@@ -225,6 +225,53 @@ app.put('/api/user/:id/profile', async (req, res) => {
     }
 });
 
+// 12. Predict Next Month Budget
+app.get('/api/predict-budget/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        const expenses = await Expense.find({
+            userId,
+            date: { $gte: threeMonthsAgo },
+            type: 'expense'
+        });
+
+        // Group by category
+        const categoryGroups = {};
+        expenses.forEach(exp => {
+            if (!categoryGroups[exp.category]) categoryGroups[exp.category] = [];
+            categoryGroups[exp.category].push(exp.amount);
+        });
+
+        const predictions = Object.keys(categoryGroups).map(category => {
+            const amounts = categoryGroups[category];
+            const total = amounts.reduce((a, b) => a + b, 0);
+            const avg = total / 3; // Simple 3-month average
+            const predicted = avg * 1.05; // +5% Buffer
+
+            // Trend Logic (Simple)
+            const trend = amounts.length > 5 ? 'High Activity' : 'Stable';
+
+            return {
+                category,
+                predictedAmount: Math.round(predicted),
+                insight: trend,
+                buffer: '5%'
+            };
+        });
+
+        // Calculate Total Predicted Budget
+        const totalPredicted = predictions.reduce((acc, curr) => acc + curr.predictedAmount, 0);
+
+        res.json({ totalPredicted, predictions });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 404 Handler for undefined API routes
 app.use((req, res) => {
     res.status(404).json({ error: "Endpoint not found" });

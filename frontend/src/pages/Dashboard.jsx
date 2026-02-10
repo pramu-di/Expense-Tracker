@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 // import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'; // Replaced with native API
 import toast, { Toaster } from 'react-hot-toast';
@@ -97,6 +97,9 @@ const Dashboard = () => {
   // Editing Profile State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [tempName, setTempName] = useState("");
+
+  // Prediction State
+  const [predictions, setPredictions] = useState(null);
 
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -227,8 +230,16 @@ const Dashboard = () => {
     else {
       fetchExpenses();
       fetchUserData();
+      fetchPredictions();
     }
   }, [navigate, userId]);
+
+  const fetchPredictions = async () => {
+    try {
+      const res = await axios.get(`/api/predict-budget/${userId}`);
+      setPredictions(res.data);
+    } catch (err) { console.error("Failed to fetch predictions", err); }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -775,6 +786,54 @@ const Dashboard = () => {
                 )}
               </div>
 
+
+
+              {/* FUTURE ME: PREDICTION SECTION */}
+              {predictions && predictions.predictions && predictions.predictions.length > 0 && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${glassCard} border-indigo-500/20 bg-gradient-to-br from-indigo-900/10 to-purple-900/10`}>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                      <h3 className="font-bold text-xl flex items-center gap-2 text-indigo-400"><Target size={24} /> Future Me: Next Month Forecast</h3>
+                      <p className="text-sm text-slate-500 mt-1">Based on your last 3 months of spending habits.</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold uppercase text-slate-500 tracking-wider">Estimated Budget Needed</p>
+                      <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {predictions.totalPredicted.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* BARCHART */}
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={predictions.predictions}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
+                          <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} dy={10} />
+                          <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: darkMode ? '#0f172a' : '#fff', borderRadius: '12px', border: 'none', padding: '12px' }} />
+                          <Bar dataKey="predictedAmount" name="Predicted" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={40} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* INSIGHTS LIST */}
+                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2 scrollbar-none">
+                      {predictions.predictions.map((p, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
+                          <div>
+                            <p className="font-bold text-sm">{p.category}</p>
+                            <p className="text-xs text-slate-500">Buffer included: {p.buffer}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-indigo-400">{currency} {p.predictedAmount.toLocaleString()}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.insight}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* CHARTS & FORM */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* CHART */}
@@ -1264,7 +1323,7 @@ const Dashboard = () => {
           </motion.button>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 };
 
