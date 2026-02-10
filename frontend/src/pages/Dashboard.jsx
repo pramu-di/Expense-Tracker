@@ -5,7 +5,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react'; // Added Loader2
+import { Loader2, Camera, Upload } from 'lucide-react'; // Added Camera, Upload
+import { createWorker } from 'tesseract.js'; // Added Tesseract
 // import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'; // Replaced with native API
 import toast, { Toaster } from 'react-hot-toast';
 import {
@@ -102,6 +103,11 @@ const Dashboard = () => {
   // Prediction State
   const [predictions, setPredictions] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
+
+  // OCR State
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState("");
+  const fileInputRef = useRef(null);
 
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -243,6 +249,82 @@ const Dashboard = () => {
       setPredictions(res.data);
     } catch (err) { console.error("Failed to fetch predictions", err); }
     finally { setIsPredicting(false); }
+  };
+
+  // --- OCR / RECEIPT SCANNING LOGIC ---
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setScanning(true);
+    setScanProgress("Initializing OCR...");
+
+    try {
+      const worker = await createWorker();
+      // await worker.loadLanguage('eng');
+      // await worker.initialize('eng');
+
+      setScanProgress("Scanning Receipt...");
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      console.log("OCR Text:", text); // Debugging
+      parseReceiptData(text);
+      toast.success("Receipt scanned!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to scan receipt.");
+    } finally {
+      setScanning(false);
+      setScanProgress("");
+    }
+  };
+
+  const parseReceiptData = (text) => {
+    const lines = text.split('\n');
+    let foundAmount = 0;
+    let foundCategory = "Other";
+    let foundDescription = "Scanned Receipt";
+
+    // 1. Try to find the "Total" line
+    const totalRegex = /total/i;
+    const priceRegex = /(\d+[.,]\d{2})/g; // Simple regex for prices like 12.99 or 1,200.00
+
+    let potentialPrices = [];
+
+    lines.forEach(line => {
+      // Look for keywords for category
+      if (/kfc|mcdonald|pizza|burger|restaurant|cafe|coffee|starbucks/i.test(line)) foundCategory = "Food";
+      if (/uber|lyft|taxi|fuel|petrol|gas|train|bus/i.test(line)) foundCategory = "Transport";
+      if (/walmart|target|costco|grocery|market/i.test(line)) foundCategory = "Shopping";
+      if (/pharmacy|doctor|hospital|clinic/i.test(line)) foundCategory = "Health";
+
+      // Extract prices
+      const matches = line.match(priceRegex);
+      if (matches) {
+        matches.forEach(m => {
+          let val = parseFloat(m.replace(/,/g, ''));
+          if (!isNaN(val)) potentialPrices.push(val);
+        });
+      }
+
+      // Try to find exact "Total" line
+      if (totalRegex.test(line)) {
+        const matches = line.match(priceRegex);
+        if (matches) {
+          foundAmount = parseFloat(matches[matches.length - 1].replace(/,/g, ''));
+        }
+      }
+    });
+
+    // Fallback: If no "Total" keyword found, take the largest number (heuristic)
+    if (foundAmount === 0 && potentialPrices.length > 0) {
+      foundAmount = Math.max(...potentialPrices);
+    }
+
+    if (foundAmount > 0) setAmount(foundAmount);
+    setCategory(foundCategory);
+    if (!text.trim()) setText(foundDescription); // Only if empty
   };
 
   const fetchUserData = async () => {
@@ -877,13 +959,28 @@ const Dashboard = () => {
                 <div className={glassCard}>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-lg">New Entry</h3>
-                    <motion.button
-                      onClick={toggleListening}
-                      whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
-                      className={`p-3 rounded-full flex items-center justify-center transition-all ${listening ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30' : 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20'}`}
-                    >
-                      {listening ? <MicOff size={20} /> : <Mic size={20} />}
-                    </motion.button>
+                    <div className="flex gap-2 relative">
+                      {/* Receipt Scanning Button */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`p-3 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${scanning ? 'bg-indigo-500 animate-pulse text-white' : 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20'}`}
+                        title="Scan Receipt"
+                      >
+                        {scanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
+                      </button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+
+                      <motion.button
+                        onClick={toggleListening}
+                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
+                        className={`p-3 rounded-full flex items-center justify-center transition-all ${listening ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30' : 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20'}`}
+                      >
+                        {listening ? <MicOff size={20} /> : <Mic size={20} />}
+                      </motion.button>
+
+                      {scanning && <span className="absolute -bottom-8 right-0 text-[10px] font-bold text-indigo-400 whitespace-nowrap bg-black/50 px-2 py-1 rounded-full backdrop-blur-md border border-white/10">{scanProgress}</span>}
+                    </div>
                   </div>
 
                   {/* QUICK ACTIONS */}
