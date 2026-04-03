@@ -290,12 +290,7 @@ const Dashboard = () => {
       const processedImageIdx = await preprocessImage(file);
       setScanProgress("Initializing OCR Engine...");
 
-      const worker = await createWorker('eng'); // Optimized: Pre-load English engine only
-
-      // Speed Optimization: Whitelist characters
-      await worker.setParameters({
-        tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,$-:/%&@',
-      });
+      const worker = await createWorker('eng+sin+tam'); // Load English, Sinhala, and Tamil engines
 
       setScanProgress("Scanning Receipt...");
       const { data } = await worker.recognize(processedImageIdx);
@@ -321,7 +316,7 @@ const Dashboard = () => {
     const lines = fullText.split('\n').map(line => line.trim()).filter(l => l.length > 0);
 
     let foundAmount = 0;
-    let foundCategory = "Other";
+    let foundCategory = "Bills";
     let foundDescription = "";
 
     // --- 1. MERCHANT NAME DETECTION (Heuristic) ---
@@ -337,8 +332,8 @@ const Dashboard = () => {
       const isHeader = /tax|invoice|receipt|copy|bill|cash/i.test(line);
 
       if (!isDate && !isNumeric && !isHeader && line.length > 3) {
-        // Strict approach: strip all numbers and special characters
-        foundDescription = line.replace(/[^a-zA-Z\s]/g, '').trim(); 
+        // Universal approach: strip numbers and symbols but KEEP letters from ANY language (English, Sinhala, Tamil)
+        foundDescription = line.replace(/[^\p{L}\s'&]/gu, '').trim(); 
         break;
       }
     }
