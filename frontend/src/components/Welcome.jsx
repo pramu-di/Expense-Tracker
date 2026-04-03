@@ -209,7 +209,7 @@ const Welcome = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="absolute bottom-4 md:bottom-6 left-0 right-0 text-center pointer-events-none">
+      <div className="w-full text-center pointer-events-none mt-12 md:mt-auto pb-2 z-20 relative shrink-0">
         <p className="text-slate-500 font-light tracking-[0.4em] text-[8px] md:text-[9px] uppercase">Designed by Pramudi Lakshika</p>
       </div>
     </div>
