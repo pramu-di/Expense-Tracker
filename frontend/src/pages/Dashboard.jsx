@@ -51,6 +51,7 @@ const Dashboard = () => {
   const [expenses, setExpenses] = useState([]);
   const [text, setText] = useState("");
   const [amount, setAmount] = useState("");
+  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState("Food");
   const [transactionType, setTransactionType] = useState("expense");
   const [mood, setMood] = useState(""); // Mood State
@@ -319,6 +320,23 @@ const Dashboard = () => {
     let foundCategory = "Bills";
     let foundDescription = "";
 
+    // --- 0. DATE DETECTION ---
+    const dateRegex = /\b(?:(?:0?[1-9]|[12]\d|3[01])[-\/.\s](?:0?[1-9]|1[0-2])[-\/.\s](?:19|20)?\d{2}|(?:19|20)\d{2}[-\/.\s](?:0?[1-9]|1[0-2])[-\/.\s](?:0?[1-9]|[12]\d|3[01]))\b/;
+    const foundDateStr = lines.find(line => dateRegex.test(line));
+    if (foundDateStr) {
+      try {
+        const ds = foundDateStr.match(dateRegex)[0].replace(/[.\s]/g, '-').replace(/\//g, '-');
+        const segments = ds.split('-');
+        if (segments.length === 3) {
+          let y, m, d;
+          if (segments[0].length === 4) { y = segments[0]; m = segments[1]; d = segments[2]; }
+          else if (segments[2].length === 4) { y = segments[2]; m = segments[1]; d = segments[0]; }
+          else { y = "20" + segments[2]; m = segments[1]; d = segments[0]; }
+          setExpenseDate(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`);
+        }
+      } catch (e) { console.error("Date parse error", e); }
+    }
+
     // --- 1. MERCHANT NAME DETECTION (Heuristic) ---
     // Look at first 3 meaningful lines
     for (let i = 0; i < Math.min(lines.length, 3); i++) {
@@ -558,7 +576,7 @@ const Dashboard = () => {
     const payload = {
       text, amount: Number(amount), category, type: transactionType, userId,
       isRecurring, billingCycle, nextBillingDate: isRecurring ? nextBillingDate : null,
-      mood // Added mood to payload
+      mood, date: expenseDate
     };
 
     try {
@@ -574,7 +592,7 @@ const Dashboard = () => {
         toast.success("Transaction Added!");
         fetchPredictions(); // Auto-refresh predictions
       }
-      setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate(""); setMood(""); // Reset Mood
+      setText(""); setAmount(""); setIsRecurring(false); setNextBillingDate(""); setMood(""); setExpenseDate(new Date().toISOString().split('T')[0]); // Reset
       resetTranscript(); // Clear voice buffer
     } catch (err) {
       toast.error("Failed to save transaction.");
@@ -1101,7 +1119,16 @@ const Dashboard = () => {
                       className={`${glassInput} ${isLowConfidence && amount ? 'ring-2 ring-yellow-500/50 bg-yellow-500/10' : ''}`}
                       required
                     />
-                    {isLowConfidence && amount && <p className="text-[10px] text-yellow-500 mt-1 ml-1">Check Amount (Low Confidence)</p>}
+
+                    <input
+                      type="date"
+                      value={expenseDate}
+                      onChange={(e) => setExpenseDate(e.target.value)}
+                      className={glassInput}
+                      required
+                    />
+
+                    {isLowConfidence && amount && <p className="text-[10px] text-yellow-500 ml-1">Check Amount (Low Confidence)</p>}
 
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
                       <div className={`w-5 h-5 rounded border flex items-center justify-center ${isRecurring ? 'bg-indigo-500 border-indigo-500' : 'border-slate-500'}`}>

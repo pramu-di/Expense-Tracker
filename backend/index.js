@@ -115,9 +115,9 @@ app.get('/api/expenses/:userId', async (req, res) => {
 
 // 4. Add New Expense
 app.post('/api/expenses', async (req, res) => {
-    const { text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate } = req.body;
+    const { text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate, date } = req.body;
     try {
-        const newExpense = new Expense({ text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate });
+        const newExpense = new Expense({ text, amount, category, userId, type, isRecurring, billingCycle, nextBillingDate, date });
         const savedExpense = await newExpense.save();
         res.status(201).json(savedExpense);
     } catch (err) {
@@ -127,11 +127,11 @@ app.post('/api/expenses', async (req, res) => {
 
 // 5. Update Existing Expense 
 app.put('/api/expenses/:id', async (req, res) => {
-    const { text, amount, category, type, isRecurring, billingCycle, nextBillingDate } = req.body;
+    const { text, amount, category, type, isRecurring, billingCycle, nextBillingDate, date } = req.body;
     try {
         const updatedExpense = await Expense.findByIdAndUpdate(
             req.params.id,
-            { text, amount, category, type, isRecurring, billingCycle, nextBillingDate },
+            { text, amount, category, type, isRecurring, billingCycle, nextBillingDate, date },
             { new: true }
         );
         res.json(updatedExpense);
