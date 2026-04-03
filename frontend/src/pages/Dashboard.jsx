@@ -118,6 +118,48 @@ const Dashboard = () => {
   
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const profilePicInputRef = useRef(null);
+
+  const handleProfilePicSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.match('image.*')) {
+      toast.error("Please select a valid image.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB.");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setProfileAvatar(objectUrl);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 200;
+        let w = img.width; let h = img.height;
+        const size = Math.min(w, h);
+        const sX = (w - size) / 2; const sY = (h - size) / 2;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = MAX; canvas.height = MAX;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, sX, sY, size, size, 0, 0, MAX, MAX);
+        
+        const b64 = canvas.toDataURL('image/jpeg', 0.9);
+        axios.put(`/api/user/${userId}/profile`, { avatar: b64 })
+          .then(() => toast.success("Profile picture saved!"))
+          .catch(() => toast.error("Failed to save picture."));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -1402,13 +1444,22 @@ const Dashboard = () => {
                 <div className={`md:col-span-1 ${glassCard} flex flex-col items-center text-center relative overflow-hidden`}>
                   <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20" />
 
-                  <div className="relative mt-8 mb-4 group cursor-pointer" onClick={() => setIsEditingProfile(!isEditingProfile)}>
-                    <div className="w-32 h-32 rounded-full bg-slate-900 border-4 border-white/10 flex items-center justify-center text-6xl shadow-2xl relative overflow-hidden">
-                      {profileAvatar}
-                      {isEditingProfile && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-bold uppercase">Change</div>}
+                  <div className="relative mt-8 mb-4">
+                    <div className="w-32 h-32 rounded-full bg-slate-900 border-4 border-white/10 flex items-center justify-center text-6xl shadow-2xl relative overflow-hidden group cursor-pointer" onClick={() => profilePicInputRef.current?.click()}>
+                      {profileAvatar && profileAvatar.length > 50 ? (
+                         <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                         <span>{profileAvatar || '👩‍💻'}</span>
+                      )}
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                        Upload
+                      </div>
                     </div>
-                    <div className="absolute bottom-2 right-2 bg-indigo-500 rounded-full p-2 text-white shadow-lg"><Edit2 size={14} /></div>
+                    <div className="absolute bottom-2 right-2 bg-indigo-500 rounded-full p-2 text-white shadow-lg cursor-pointer hover:bg-indigo-600 transition-colors z-10" onClick={() => setIsEditingProfile(!isEditingProfile)}>
+                      <Edit2 size={14} />
+                    </div>
                   </div>
+                  <input type="file" accept="image/png, image/jpeg, image/jpg" ref={profilePicInputRef} className="hidden" onChange={handleProfilePicSelect} />
 
                   <AnimatePresence>
                     {isEditingProfile ? (
