@@ -845,7 +845,13 @@ const Dashboard = () => {
       >
         <div className="flex justify-between items-center p-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl">{profileAvatar}</div>
+            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl overflow-hidden shrink-0">
+              {profileAvatar && typeof profileAvatar === 'string' && profileAvatar.length > 30 ? (
+                <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span>{profileAvatar || '👩‍💻'}</span>
+              )}
+            </div>
             <div>
               <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{profileName}</h3>
               <p className="text-xs text-slate-500">Free Plan</p>
@@ -890,7 +896,13 @@ const Dashboard = () => {
       {/* 2. DESKTOP SIDEBAR (STATIC) */}
       <div className={`hidden md:flex w-64 lg:w-72 flex-col p-6 gap-2 flex-shrink-0 border-r ${darkMode ? 'bg-slate-900/50 border-white/5' : 'bg-white/50 border-black/5'} backdrop-blur-2xl`}>
         <div className="p-4 mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">S</div>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg shrink-0 overflow-hidden">
+            {profileAvatar && typeof profileAvatar === 'string' && profileAvatar.length > 30 ? (
+              <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span>S</span>
+            )}
+          </div>
           <h1 className={`text-xl font-bold tracking-tight hidden lg:block ${darkMode ? 'bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent' : 'text-slate-900'}`}>SmartSpend</h1>
         </div>
 
@@ -934,18 +946,14 @@ const Dashboard = () => {
         className="flex-1 w-full h-[calc(100vh-64px)] md:h-screen overflow-y-auto z-10 p-4 md:p-8 lg:p-12 scrollbar-none relative"
       >
         <header className="flex justify-between items-center mb-10 md:mb-10">
-          <div className="hidden md:block">
+          <div>
             <motion.h2
               key={view} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold tracking-tight"
+              className="text-2xl md:text-3xl font-bold tracking-tight"
             >
               {view.charAt(0).toUpperCase() + view.slice(1)}
             </motion.h2>
             <p className="text-slate-500 font-medium text-sm mt-1">Welcome back, {profileName}</p>
-          </div>
-          {/* Mobile View Title */}
-          <div className="md:hidden">
-            <h2 className="text-2xl font-bold tracking-tight">{view.charAt(0).toUpperCase() + view.slice(1)}</h2>
           </div>
 
           <motion.button
