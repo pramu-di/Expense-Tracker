@@ -44,6 +44,7 @@ import {
   Save,
   Trash2,
   ArrowUp,
+  Download,
   Image as ImageIcon,
   Scan
 } from 'lucide-react';
