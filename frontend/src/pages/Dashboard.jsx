@@ -516,7 +516,7 @@ const Dashboard = () => {
     const d = new Date(exp.date);
     const matchesSearch = exp.text.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "All" || exp.category === filterCategory;
-    const matchesDate = (startDate && endDate) ? (d >= new Date(startDate) && d <= new Date(endDate)) : (d.getMonth() === selectedMonth && d.getFullYear() === selectedYear);
+    const matchesDate = (startDate && endDate) ? (d >= new Date(startDate) && d <= new Date(endDate)) : true;
 
     return matchesSearch && matchesCategory && matchesDate;
   });
