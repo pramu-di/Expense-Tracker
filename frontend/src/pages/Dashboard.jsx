@@ -153,19 +153,12 @@ const Dashboard = () => {
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
           }
         }
 
-        // Only update if we have final text or if strictly necessary
-        // On mobile, since continuous=false, we might rely on the final result at the end.
-        // But to correct duplication, we prioritize storing FINAL results.
+        // Only update if we have final text (to strictly avoid duplication/interim bugs)
         if (finalTranscript) {
-          setTranscript(prev => isMobile ? finalTranscript : prev + ' ' + finalTranscript);
-        } else if (interimTranscript) {
-          // Optional: visual feedback for interim, but don't save to 'transcript' state 
-          // used for processing to avoid "double processing"
+          setTranscript(finalTranscript.trim());
         }
       };
 
@@ -297,14 +290,13 @@ const Dashboard = () => {
       const processedImageIdx = await preprocessImage(file);
       setScanProgress("Initializing OCR Engine...");
 
-      const worker = await createWorker();
+      const worker = await createWorker('eng'); // Optimized: Pre-load English engine only
 
       // Speed Optimization: Whitelist characters
       await worker.setParameters({
         tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,$-:/%&@',
       });
 
-      setScanProgress("Scanning Receipt...");
       setScanProgress("Scanning Receipt...");
       const { data } = await worker.recognize(processedImageIdx);
       await worker.terminate();
@@ -345,7 +337,8 @@ const Dashboard = () => {
       const isHeader = /tax|invoice|receipt|copy|bill|cash/i.test(line);
 
       if (!isDate && !isNumeric && !isHeader && line.length > 3) {
-        foundDescription = line.replace(/[^\w\s'&]/g, '').trim(); // Clean symbols
+        // Strict approach: strip all numbers and special characters
+        foundDescription = line.replace(/[^a-zA-Z\s]/g, '').trim(); 
         break;
       }
     }
@@ -363,12 +356,12 @@ const Dashboard = () => {
 
     // --- 3. AMOUNT EXTRACTION (Advanced Heuristics) ---
     const currencyRegex = /(\d{1,3}(,\d{3})*(\.\d{2})?)/g; // Matches 1,200.50 or 500.00
-    // Key: Look for "Total" and then check the SAME line or the NEXT line
+    // Key: Look for "Total", "Net", "LKR", "Amount" and then check the SAME line or the NEXT line
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toLowerCase();
       // Keywords that usually precede the final amount
-      if (/total|net amount|grand total|balance|due|pay|amount due/i.test(line) && !/sub( |-)?total/i.test(line)) {
+      if (/total|net|lkr|amount|balance|due|pay/i.test(line) && !/sub( |-)?total/i.test(line)) {
 
         // Strategies:
         // A. Check SAME line (e.g., "Total: 1500.00")
@@ -598,6 +591,7 @@ const Dashboard = () => {
       await axios.delete(`/api/expenses/${id}`);
       setExpenses(expenses.filter(exp => exp._id !== id));
       toast.success("Deleted Successfully");
+      fetchPredictions(); // Auto-refresh predictions upon deletion
     }
   };
 
