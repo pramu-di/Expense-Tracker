@@ -305,7 +305,7 @@ const Dashboard = () => {
       // console.log("OCR Confidence:", confidence);
       setIsLowConfidence(confidence < 70);
 
-      parseReceiptData(data.lines);
+      parseReceiptData(data.text);
       toast.success(confidence < 70 ? "Receipt scanned (Low Confidence)" : "Receipt scanned!");
     } catch (err) {
       console.error(err);
@@ -316,9 +316,9 @@ const Dashboard = () => {
     }
   };
 
-  const parseReceiptData = (linesData) => {
+  const parseReceiptData = (fullText) => {
     // Extract text lines from Tesseract data
-    const lines = linesData.map(line => line.text.trim()).filter(l => l.length > 0);
+    const lines = fullText.split('\n').map(line => line.trim()).filter(l => l.length > 0);
 
     let foundAmount = 0;
     let foundCategory = "Other";
