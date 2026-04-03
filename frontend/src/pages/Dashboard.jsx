@@ -1446,7 +1446,7 @@ const Dashboard = () => {
 
                   <div className="relative mt-8 mb-4">
                     <div className="w-32 h-32 rounded-full bg-slate-900 border-4 border-white/10 flex items-center justify-center text-6xl shadow-2xl relative overflow-hidden group cursor-pointer" onClick={() => profilePicInputRef.current?.click()}>
-                      {profileAvatar && profileAvatar.length > 50 ? (
+                      {profileAvatar && (typeof profileAvatar === 'string' && profileAvatar.length > 30) ? (
                          <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                          <span>{profileAvatar || '👩‍💻'}</span>
@@ -1489,51 +1489,72 @@ const Dashboard = () => {
                 {/* FINANCIAL PASSPORT */}
                 <div className={`md:col-span-2 ${glassCard}`}>
                   <h3 className="font-bold mb-6 text-xl flex items-center gap-3"><Wallet className="text-emerald-400" /> Financial Passport</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                      <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Total Income</p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
-                    </div>
-                    <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20">
-                      <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Total Spent</p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0).toLocaleString()}</p>
-                    </div>
-                    <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 col-span-2">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Net Worth</p>
-                          <p className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {(expenses.filter(e => e.type === 'income').reduce((a, c) => a + c.amount, 0) - expenses.filter(e => e.type === 'expense').reduce((a, c) => a + c.amount, 0)).toLocaleString()}</p>
+                  {(() => {
+                    const totalIncome = expenses?.filter(e => e?.type === 'income')?.reduce((a, c) => a + (c?.amount || 0), 0) || 0;
+                    const totalSpent = expenses?.filter(e => e?.type === 'expense')?.reduce((a, c) => a + (c?.amount || 0), 0) || 0;
+                    const netWorth = totalIncome - totalSpent;
+                    return (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                          <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Total Income</p>
+                          <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {totalIncome.toLocaleString()}</p>
                         </div>
-                        <div className="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
-                          <Shield size={32} />
+                        <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20">
+                          <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Total Spent</p>
+                          <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {totalSpent.toLocaleString()}</p>
+                        </div>
+                        <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 col-span-2">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Net Worth</p>
+                              <p className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currency} {netWorth.toLocaleString()}</p>
+                            </div>
+                            <div className="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
+                              <Shield size={32} />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* TROPHY CASE */}
               <div className={glassCard}>
-                <div className="flex justify-between items-center mb-10">
-                  <h3 className="font-bold text-2xl flex items-center gap-3"><Award className="text-amber-400" /> Trophy Room</h3>
-                  <div className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-xs uppercase tracking-wider">
-                    {unlockedCount} / {badges.length} Unlocked
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {badges.map((badge) => (
-                    <motion.div
-                      key={badge.id}
-                      whileHover={{ y: -4 }}
-                      className={`p-6 rounded-2xl border transition-all relative overflow-hidden group ${badge.unlocked ? 'bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20' : 'bg-slate-500/5 border-white/5 opacity-40 grayscale'}`}
-                    >
-                      <div className={`mb-3 ${badge.unlocked ? 'text-indigo-400' : 'text-slate-500'}`}>{badge.icon}</div>
-                      <h4 className={`font-bold text-base mb-1 ${badge.unlocked ? 'text-white' : 'text-slate-500'}`}>{badge.name}</h4>
-                      <p className="text-xs font-medium text-slate-400 leading-relaxed">{badge.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
+                {(() => {
+                  // Fallback for missing badges declaration
+                  const safeBadges = typeof badges !== 'undefined' ? badges : [
+                    { id: 1, name: 'First Expense', icon: '🐣', description: 'Log your first expense.', unlocked: expenses?.length > 0 },
+                    { id: 2, name: 'Target Master', icon: '🎯', description: 'Stay under budget for a month.', unlocked: false },
+                    { id: 3, name: 'Big Saver', icon: '💰', description: 'Save over 10,000.', unlocked: (expenses?.filter(e => e?.type === 'income').reduce((a,c) => a+(c?.amount||0), 0) - expenses?.filter(e => e?.type === 'expense').reduce((a,c) => a+(c?.amount||0), 0)) >= 10000 }
+                  ];
+                  const safeUnlockedCount = typeof unlockedCount !== 'undefined' ? unlockedCount : safeBadges.filter(b => b.unlocked).length;
+                  
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mb-10">
+                        <h3 className="font-bold text-2xl flex items-center gap-3"><Award className="text-amber-400" /> Trophy Room</h3>
+                        <div className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-xs uppercase tracking-wider">
+                          {safeUnlockedCount} / {safeBadges?.length || 0} Unlocked
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {safeBadges?.map((badge) => (
+                          <motion.div
+                            key={badge?.id}
+                            whileHover={{ y: -4 }}
+                            className={`p-6 rounded-2xl border transition-all relative overflow-hidden group ${badge?.unlocked ? 'bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20' : 'bg-slate-500/5 border-white/5 opacity-40 grayscale'}`}
+                          >
+                            <div className={`mb-3 ${badge?.unlocked ? 'text-indigo-400' : 'text-slate-500'}`}>{badge?.icon}</div>
+                            <h4 className={`font-bold text-base mb-1 ${badge?.unlocked ? 'text-white' : 'text-slate-500'}`}>{badge?.name}</h4>
+                            <p className="text-xs font-medium text-slate-400 leading-relaxed">{badge?.description}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </motion.div>
           )}
