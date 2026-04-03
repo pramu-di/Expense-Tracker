@@ -42,9 +42,10 @@ import {
   BarChart2,
   Edit2,
   Save,
-  Download,
   Trash2,
-  ArrowUp
+  ArrowUp,
+  Image as ImageIcon,
+  Scan
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -109,7 +110,14 @@ const Dashboard = () => {
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState("");
   const [isLowConfidence, setIsLowConfidence] = useState(false);
-  const fileInputRef = useRef(null);
+
+  // Image Upload Modals & Flow
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
+  
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
@@ -253,11 +261,21 @@ const Dashboard = () => {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
+          // Image Compression & Sizing
+          const MAX_WIDTH = 1080;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > MAX_WIDTH) {
+             height = height * (MAX_WIDTH / width);
+             width = MAX_WIDTH;
+          }
+          
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
 
           // Image Processing: Grayscale & Contrast
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -272,7 +290,7 @@ const Dashboard = () => {
             data[i + 2] = color; // Blue
           }
           ctx.putImageData(imgData, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg'));
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.src = e.target.result;
       };
@@ -280,8 +298,35 @@ const Dashboard = () => {
     });
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageSelect = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File is too large! Please upload under 10MB.");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewImage(objectUrl);
+    setPendingFile(file);
+    
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+  };
+
+  const confirmScan = () => {
+    if (!pendingFile) return;
+    const fileToScan = pendingFile;
+    
+    setPreviewImage(null);
+    setPendingFile(null);
+    setShowUploadModal(false);
+    
+    handleImageUpload(fileToScan);
+  };
+
+  const handleImageUpload = async (file) => {
     if (!file) return;
 
     setScanning(true);
@@ -1056,13 +1101,14 @@ const Dashboard = () => {
                       {/* Receipt Scanning Button */}
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setShowUploadModal(true)}
                         className={`p-3 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${scanning ? 'bg-indigo-500 animate-pulse text-white' : 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20'}`}
                         title="Scan Receipt"
                       >
                         {scanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                       </button>
-                      <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                      <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleImageSelect} className="hidden" />
+                      <input type="file" accept="image/*" ref={galleryInputRef} onChange={handleImageSelect} className="hidden" />
 
                       <motion.button
                         onClick={toggleListening}
@@ -1525,6 +1571,53 @@ const Dashboard = () => {
 
         </AnimatePresence>
       </div>
+      {/* IMAGE UPLOAD BOTTOM SHEET */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full max-w-md bg-slate-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl pb-10"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white mb-0">{previewImage ? "Preview Receipt" : "Upload Receipt"}</h3>
+                <button onClick={() => { setShowUploadModal(false); setPreviewImage(null); setPendingFile(null); }} className="p-2 rounded-full hover:bg-white/10 text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {!previewImage ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => cameraInputRef.current?.click()} className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 transition-all text-indigo-400">
+                    <Camera size={32} />
+                    <span className="font-bold">Take Photo</span>
+                  </button>
+                  <button onClick={() => galleryInputRef.current?.click()} className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all text-emerald-400">
+                    <ImageIcon size={32} />
+                    <span className="font-bold">Gallery</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="relative w-full h-64 bg-black/50 rounded-xl overflow-hidden border border-white/5">
+                    <img src={previewImage} alt="Receipt Preview" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flex gap-4">
+                    <button onClick={() => { setPreviewImage(null); setPendingFile(null); }} className="flex-1 py-3 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Retake</button>
+                    <button onClick={() => confirmScan()} className="flex-1 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center gap-2">
+                      <Scan size={18} /> Confirm Scan
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* SCROLL TO TOP BUTTON */}
       <AnimatePresence>
         {showScrollTop && (
