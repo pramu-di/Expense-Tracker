@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, PieChart, TrendingUp, ArrowRight } from 'lucide-react';
+import { Wallet, PieChart, TrendingUp, ArrowRight, Menu, X } from 'lucide-react';
 
 const Welcome = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -15,7 +16,38 @@ const Welcome = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0f0c29] text-white flex flex-col items-center justify-center p-4 md:p-8 lg:p-12 overflow-hidden relative selection:bg-fuchsia-500 selection:text-white">
+    <div className="min-h-[100dvh] w-full max-w-[100vw] overflow-x-hidden bg-[#0f0c29] text-white flex flex-col items-center justify-center p-4 pt-20 md:p-8 lg:p-12 relative selection:bg-fuchsia-500 selection:text-white">
+
+      {/* NAVBAR */}
+      <nav className="absolute top-0 left-0 w-full p-4 md:p-6 z-50 flex justify-between items-center text-white">
+        <div className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">SmartSpend</div>
+        
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-indigo-200">
+          <a href="#features" className="hover:text-white transition-colors">Features</a>
+          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+          <button onClick={() => navigate('/login')} className="px-4 py-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">Login</button>
+        </div>
+        
+        {/* Mobile Hamburger */}
+        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 bg-white/5 rounded-xl border border-white/10">
+          {menuOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
+        </button>
+      </nav>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className="absolute top-[70px] left-4 right-4 bg-[#1a1638] rounded-2xl p-4 border border-indigo-500/30 shadow-2xl z-40 flex flex-col gap-4 text-center md:hidden"
+          >
+            <a href="#features" onClick={() => setMenuOpen(false)} className="text-indigo-200 font-medium py-2">Features</a>
+            <a href="#pricing" onClick={() => setMenuOpen(false)} className="text-indigo-200 font-medium py-2">Pricing</a>
+            <button onClick={() => navigate('/login')} className="bg-indigo-600 text-white font-bold py-3 rounded-xl min-h-[44px]">Login Space</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 1. BACKGROUND GRADIENTS */}
       <div className="absolute inset-0 z-0">
@@ -42,7 +74,7 @@ const Welcome = () => {
             <span className="text-indigo-200 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">SmartSpend v2.0 Live</span>
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl lg:text-8xl font-black leading-[1.1] md:leading-[0.9] tracking-tighter text-white drop-shadow-2xl">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-black leading-[1.1] md:leading-[0.9] tracking-tighter text-white drop-shadow-2xl">
             Master Your <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-pink-400 drop-shadow-lg">
               Wealth
@@ -57,14 +89,14 @@ const Welcome = () => {
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/login')}
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 flex items-center justify-center gap-2 group transition-all"
+              className="w-full sm:w-auto min-h-[44px] px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 flex items-center justify-center gap-2 group transition-all"
             >
               Get Started <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/signup')}
-              className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-bold rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all"
+              className="w-full sm:w-auto min-h-[44px] px-8 py-4 bg-white/5 text-white font-bold rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all"
             >
               Create Account
             </motion.button>
