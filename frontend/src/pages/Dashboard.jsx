@@ -332,8 +332,8 @@ const Dashboard = () => {
       const isHeader = /tax|invoice|receipt|copy|bill|cash/i.test(line);
 
       if (!isDate && !isNumeric && !isHeader && line.length > 3) {
-        // Universal approach: strip numbers and symbols but KEEP letters from ANY language (English, Sinhala, Tamil)
-        foundDescription = line.replace(/[^\p{L}\s'&]/gu, '').trim(); 
+        // Universal approach: strip numbers and symbols but KEEP letters and their vowels/combining marks (Sinhala, Tamil)
+        foundDescription = line.replace(/[^\p{L}\p{M}\s'&]/gu, '').trim(); 
         break;
       }
     }
@@ -355,8 +355,8 @@ const Dashboard = () => {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toLowerCase();
-      // Keywords that usually precede the final amount
-      if (/total|net|lkr|amount|balance|due|pay/i.test(line) && !/sub( |-)?total/i.test(line)) {
+      // Keywords that usually precede the final amount (English, Sinhala, Tamil)
+      if (/total|net|lkr|amount|balance|due|pay|එකතුව|මුළු|மொத்தம்/i.test(line) && !/sub( |-)?total/i.test(line)) {
 
         // Strategies:
         // A. Check SAME line (e.g., "Total: 1500.00")
